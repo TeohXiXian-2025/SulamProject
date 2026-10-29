@@ -8,15 +8,14 @@ import { OrbitControls } from '../vendor/OrbitControls.js';
 import { t } from './i18n.js';
 
 export const EXTRA_TYPES = {
-  table: { height: 0.86, color: '#cfc9bf', w: 1.6, h: 1.6 },
+  table: { height: 0.45, color: '#b08968', w: 2, h: 1 },
   entrance: { height: 0.06, color: '#22c55e', w: 2, h: 1, label: 'entrance' },
-  wall: { height: 0.8, color: '#65747b', w: 4, h: 1 },
-  toilet: { height: 1.8, color: '#a5b4be', w: 2, h: 2, label: 'toilet' },
+  wall: { height: 1.8, color: '#9ca3af', w: 4, h: 1 },
+  toilet: { height: 1.3, color: '#93c5fd', w: 1, h: 2, label: 'toilet' },
   sink: { height: 0.9, color: '#cbd5e1', w: 1, h: 1, label: 'sink' },
-  pillar: { height: 3, color: '#303638', w: 1.2, h: 1.2 },
-  counter: { height: 1.08, color: '#a5b4be', w: 3, h: 3 },
+  pillar: { height: 2.4, color: '#d6d3d1', w: 1, h: 1 },
 };
-const STORE_HEIGHT = 0.9;
+const STORE_HEIGHT = 1.3;
 const CLOSED_COLOR = '#a8a29e';
 
 function overlaps(a, b) {
@@ -106,8 +105,8 @@ export function createFloorPlan(container, { editable = false, onSelect = () => 
   controls.minDistance = 4;
   controls.maxDistance = 80;
 
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xddd8ce, 1.15));
-  const sun = new THREE.DirectionalLight(0xffffff, 1.4);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xd6cfc4, 1.6));
+  const sun = new THREE.DirectionalLight(0xffffff, 1.6);
   sun.castShadow = true;
   sun.shadow.mapSize.set(1024, 1024);
   scene.add(sun);
@@ -153,32 +152,19 @@ export function createFloorPlan(container, { editable = false, onSelect = () => 
     floorGroup = new THREE.Group();
     const floor = new THREE.Mesh(
       new THREE.BoxGeometry(cols + 0.6, 0.2, rows + 0.6),
-      new THREE.MeshStandardMaterial({ color: 0xeeeae1, roughness: 0.95 }),
+      new THREE.MeshStandardMaterial({ color: 0xf3ece0, roughness: 0.95 }),
     );
     floor.position.y = -0.1;
     floor.receiveShadow = true;
     floorGroup.add(floor);
-    if (editable) {
-      const pts = [];
-      for (let x = 0; x <= cols; x++) pts.push(x - cols / 2, 0.005, -rows / 2, x - cols / 2, 0.005, rows / 2);
-      for (let y = 0; y <= rows; y++) pts.push(-cols / 2, 0.005, y - rows / 2, cols / 2, 0.005, y - rows / 2);
-      const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-      floorGroup.add(new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0xd6cbb8, transparent: true, opacity: 0.7 })));
-    }
-    // The source scene has a back wall, a left wall, and a gap on the right for the entrance.
-    const walls = [
-      [0, -rows / 2, cols, 0.2],
-      [-cols / 2, 0, 0.2, rows],
-      [cols / 2, 3, 0.2, Math.max(1, rows - 6)],
-      [cols / 2, -rows / 2 + 1.5, 0.2, 3],
-    ];
-    for (const [x, z, w, d] of walls) {
-      const wall = new THREE.Mesh(new THREE.BoxGeometry(w, 0.8, d), new THREE.MeshStandardMaterial({ color: 0x65747b }));
-      wall.position.set(x, 0.4, z);
-      wall.castShadow = true;
-      floorGroup.add(wall);
-    }
+    const pts = [];
+    for (let x = 0; x <= cols; x++) pts.push(x - cols / 2, 0.005, -rows / 2, x - cols / 2, 0.005, rows / 2);
+    for (let y = 0; y <= rows; y++) pts.push(-cols / 2, 0.005, y - rows / 2, cols / 2, 0.005, y - rows / 2);
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    floorGroup.add(new THREE.LineSegments(g, new THREE.LineBasicMaterial({
+      color: 0xd6cbb8, transparent: true, opacity: editable ? 0.9 : 0.45,
+    })));
     world.add(floorGroup);
 
     const size = Math.max(cols, rows);
@@ -191,41 +177,23 @@ export function createFloorPlan(container, { editable = false, onSelect = () => 
   function makeObject(o) {
     const group = new THREE.Group();
     const height = o.kind === 'store' ? STORE_HEIGHT : EXTRA_TYPES[o.type]?.height ?? 1;
-    const mat = new THREE.MeshStandardMaterial({ color: o.kind === 'store' && !o.dim ? '#e4d9ca' : o.color, roughness: 0.75 });
-    const roundTable = o.type === 'table';
-    const body = new THREE.Mesh(roundTable
-      ? new THREE.CylinderGeometry(Math.min(o.w, o.h) / 2, Math.min(o.w, o.h) / 2, 0.12, 24)
-      : new THREE.BoxGeometry(o.w - 0.12, height, o.h - 0.12), mat);
-    body.position.y = roundTable ? 0.8 : height / 2;
+    const mat = new THREE.MeshStandardMaterial({ color: o.color, roughness: 0.6 });
+    const body = new THREE.Mesh(new THREE.BoxGeometry(o.w - 0.12, height, o.h - 0.12), mat);
+    body.position.y = height / 2;
     body.castShadow = height > 0.2;
     body.receiveShadow = true;
     body.userData.key = o.key;
     group.add(body);
 
-    const detail = (geometry, material, x, y, z) => {
-      const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial(material));
-      mesh.position.set(x, y, z);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      mesh.userData.key = o.key;
-      group.add(mesh);
-      return mesh;
-    };
-
     if (o.kind === 'store') {
-      detail(new THREE.BoxGeometry(o.w + 0.1, 0.06, o.h * 0.7), { color: '#585a55', roughness: 0.35, metalness: 0.15 }, 0, 0.92, 0.1);
-      detail(new THREE.BoxGeometry(o.w - 0.1, 1.8, 0.1), { color: '#f1ece2', roughness: 0.8 }, 0, 1.4, -0.45 * o.h);
-      for (const x of [-0.25, 0.25]) {
-        detail(new THREE.BoxGeometry(Math.min(0.82, o.w * 0.4), 0.55, 0.04),
-          { color: '#303737', emissive: '#28342f', emissiveIntensity: 0.2 }, x * o.w, 1.55, -0.38 * o.h);
-      }
-      detail(new THREE.BoxGeometry(o.w + 0.18, 0.06, 0.06), { color: o.dim ? CLOSED_COLOR : o.color }, 0, 0.98, 0.36 * o.h);
-    } else if (roundTable) {
-      detail(new THREE.CylinderGeometry(0.12, 0.25, 0.8, 12), { color: '#697777' }, 0, 0.4, 0);
-    } else if (o.type === 'counter') {
-      detail(new THREE.BoxGeometry(o.w + 0.1, 0.08, o.h + 0.1), { color: '#586566' }, 0, 1.04, 0);
-    } else if (o.type === 'toilet') {
-      detail(new THREE.BoxGeometry(0.65, 1.4, 0.04), { color: '#586566' }, 0, 0.7, o.h / 2);
+      // Darker counter strip on top for a little detail.
+      const top = new THREE.Mesh(
+        new THREE.BoxGeometry(o.w - 0.05, 0.08, o.h - 0.05),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(o.color).multiplyScalar(0.7) }),
+      );
+      top.position.y = height + 0.04;
+      top.userData.key = o.key;
+      group.add(top);
     }
 
     if (o.label) {
@@ -293,9 +261,9 @@ export function createFloorPlan(container, { editable = false, onSelect = () => 
       const b = s.block || findFreeSpot(occupied, cols, rows);
       const o = {
         key: `store:${s.id}`, kind: 'store', id: s.id, x: b.x, y: b.y, w: b.w, h: b.h,
-        color: s.dim ? CLOSED_COLOR : s.color, dim: !!s.dim,
+        color: s.dim ? CLOSED_COLOR : s.color,
         label: [s.label, s.sublabel].filter(Boolean),
-        badge: { text: String(s.number ?? '?'), color: s.dim ? '#78716c' : '#176B61' },
+        badge: { text: String(s.number ?? '?'), color: s.dim ? '#78716c' : '#A8261B' },
       };
       objects.push(o);
       occupied.push(o);

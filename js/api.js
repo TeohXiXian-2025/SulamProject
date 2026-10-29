@@ -148,7 +148,7 @@ async function firebaseApi(config) {
 // Demo (browser only)
 // ---------------------------------------------------------------------------
 function demoApi() {
-  const KEY = 'kimseng-demo-pure-v5';
+  const KEY = 'kimseng-demo-pure-v6';
   const USER_KEY = 'kimseng-demo-user';
   const listeners = new Set();
   const authListeners = new Set();
