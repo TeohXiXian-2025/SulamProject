@@ -17,6 +17,17 @@ export function getApi() {
 }
 
 const clean = (o) => JSON.parse(JSON.stringify(o ?? null));
+
+// Early versions saved the shop as "金成小贩中心 / Kim Seng Hawker Centre".
+// Show the real name instead; the manager page saves the correction.
+export const OLD_NAMES = { nameZh: '金成小贩中心', name: 'Kim Seng Hawker Centre' };
+function fixOldName(c) {
+  const out = { ...c, needsNameFix: false };
+  for (const k of ['nameZh', 'name']) {
+    if (out[k] === OLD_NAMES[k]) { out[k] = DEFAULT_CENTRE[k]; out.needsNameFix = true; }
+  }
+  return out;
+}
 const lower = (s) => String(s || '').trim().toLowerCase();
 
 // ---------------------------------------------------------------------------
@@ -99,7 +110,7 @@ async function firebaseApi(config) {
       return uidOut;
     },
 
-    watchCentre: (cb) => F.onSnapshot(centreRef, (s) => cb(s.exists() ? { ...DEFAULT_CENTRE, ...s.data() } : clean(DEFAULT_CENTRE)), onErr),
+    watchCentre: (cb) => F.onSnapshot(centreRef, (s) => cb(fixOldName(s.exists() ? { ...DEFAULT_CENTRE, ...s.data() } : clean(DEFAULT_CENTRE))), onErr),
     updateCentre: (patch) => F.setDoc(centreRef, clean(patch), { merge: true }),
     async getAdmins() {
       const s = await F.getDoc(adminsRef);

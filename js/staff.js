@@ -28,7 +28,12 @@ let plan = null;
 let planDirty = false;
 let pendingRender = false;
 
-api.watchCentre((c) => { S.centre = c; render(); });
+api.watchCentre((c) => {
+  S.centre = c;
+  // Save the corrected shop name once a manager is signed in.
+  if (c.needsNameFix && isAdmin()) api.updateCentre({ name: c.name, nameZh: c.nameZh }).catch(() => {});
+  render();
+});
 api.onAuth(async (u) => {
   authSubs.forEach((f) => f());
   authSubs = [];
@@ -37,6 +42,7 @@ api.onAuth(async (u) => {
   if (!u) return;
   S.admins = await api.getAdmins().catch(() => null);
   if (S.user !== u) return;
+  if (isAdmin() && S.centre?.needsNameFix) api.updateCentre({ name: S.centre.name, nameZh: S.centre.nameZh }).catch(() => {});
   subscribeData();
   render(true);
 });
