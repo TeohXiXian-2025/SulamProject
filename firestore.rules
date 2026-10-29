@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// Security rules for the Kim Seng Hawker Centre website.
+// Security rules for the 金城茶餐室 Restoran Kim Seng website.
 // Paste this into Firebase console → Firestore Database → Rules → Publish.
 //
 //   Everyone (no login) : read stalls, menus, reviews, centre info

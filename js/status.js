@@ -1,4 +1,4 @@
-// Works out whether the hawker centre / a stall is open right now.
+// Works out whether the shop / a stall is open right now.
 //
 // hours:    array of 7 entries (0 = Sunday … 6 = Saturday), each either
 //           null (day off) or { open: 'HH:MM', close: 'HH:MM' }.
