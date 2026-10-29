@@ -1,21 +1,14 @@
-// Data layer. Every page talks to the backend only through these functions.
-//
-//   - Firebase mode (js/config.js has a config): free Firestore database +
-//     Firebase Authentication, live updates for everyone.
-//   - Demo mode (no config): same functions, data kept in this browser's
-//     localStorage, so the site can be tried without any setup.
+// Data layer. Every page uses the configured Firebase project for
+// Firestore data and authentication.
 import { firebaseConfig } from './config.js';
-import { DEFAULT_CENTRE, STARTER_STORES } from './seed.js';
-import { uid, sortStores, sortItems } from './util.js';
+import { DEFAULT_CENTRE } from './seed.js';
+import { sortStores, sortItems } from './util.js';
 
 const FIREBASE_VERSION = '10.12.2';
 
 let apiPromise;
 export function getApi() {
-  // A local preview can use seeded browser data without contacting the live Firebase project.
-  const localDemo = ['localhost', '127.0.0.1'].includes(location.hostname)
-    && new URLSearchParams(location.search).get('demo') === '1';
-  apiPromise ??= firebaseConfig && !localDemo ? firebaseApi(firebaseConfig) : Promise.resolve(demoApi());
+  apiPromise ??= firebaseApi(firebaseConfig);
   return apiPromise;
 }
 
@@ -68,8 +61,6 @@ async function firebaseApi(config) {
   const onErr = (e) => console.error(e);
 
   return {
-    mode: 'firebase',
-
     onAuth: (cb) => A.onAuthStateChanged(auth, (u) => cb(mapUser(u))),
     signInGoogle: () => A.signInWithPopup(auth, new A.GoogleAuthProvider()),
     signInEmail: (email, pw) => A.signInWithEmailAndPassword(auth, email, pw),
@@ -120,6 +111,15 @@ async function firebaseApi(config) {
       for (const [id, patch] of Object.entries(patches)) batch.update(F.doc(db, 'stores', id), clean(patch));
       return batch.commit();
     },
+    applyKimSengLayout: (migration) => {
+      const batch = F.writeBatch(db);
+      batch.set(centreRef, { floor: clean(migration.floor) }, { merge: true });
+      for (const [id, patch] of Object.entries(migration.patches)) {
+        batch.update(F.doc(db, 'stores', id), clean(patch));
+      }
+      batch.set(F.doc(storesCol), clean(migration.newStore));
+      return batch.commit();
+    },
     deleteStore: (id) => F.deleteDoc(F.doc(db, 'stores', id)),
 
     watchItems: (storeId, cb) => F.onSnapshot(F.collection(db, 'stores', storeId, 'items'),
@@ -141,186 +141,6 @@ async function firebaseApi(config) {
       rating, text, name: (user.name || 'Customer').slice(0, 60), createdAt: F.serverTimestamp(),
     }),
     deleteReview: (storeId, reviewUid) => F.deleteDoc(F.doc(db, 'stores', storeId, 'reviews', reviewUid)),
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Demo (browser only)
-// ---------------------------------------------------------------------------
-function demoApi() {
-  const KEY = 'kimseng-demo-pure-v6';
-  const USER_KEY = 'kimseng-demo-user';
-  const listeners = new Set();
-  const authListeners = new Set();
-
-  const read = () => {
-    try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; }
-  };
-  let db = read() || seed();
-  let user = null;
-  try { user = JSON.parse(sessionStorage.getItem(USER_KEY)); } catch { /* ignore */ }
-
-  function seed() {
-    const data = { centre: clean(DEFAULT_CENTRE), admins: null, stores: {}, items: {}, reviews: {}, accounts: {} };
-    for (const s of STARTER_STORES) {
-      const id = `s${s.number}`;
-      const stall = clean(s);
-      stall.ownerUid = '';
-      stall.ownerEmail = '';
-      data.stores[id] = stall;
-      data.items[id] = {};
-    }
-    return data;
-  }
-  function persist() {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(db));
-    } catch {
-      throw new Error('Demo storage is full — remove some photos.');
-    }
-    emit();
-  }
-  const emit = () => listeners.forEach((fn) => fn());
-  window.addEventListener('storage', (e) => {
-    if (e.key === KEY) { db = read() || seed(); emit(); }
-  });
-  function watch(getter, cb) {
-    const fn = () => cb(clean(getter()));
-    listeners.add(fn);
-    setTimeout(fn, 0);
-    return () => listeners.delete(fn);
-  }
-  function setUser(u) {
-    user = u;
-    try { sessionStorage.setItem(USER_KEY, JSON.stringify(u)); } catch { /* ignore */ }
-    authListeners.forEach((fn) => fn(u));
-  }
-  const fail = (code, message) => Object.assign(new Error(message), { code });
-  const isAdmin = () => user && db.admins?.includes(user.email);
-  const ownsStore = (id) => user && (db.stores[id]?.ownerUid === user.uid
-    || (user.verified && !!db.stores[id]?.ownerEmail && db.stores[id].ownerEmail === user.email));
-  const mustAdmin = () => { if (!isAdmin()) throw fail('permission-denied', 'Missing or insufficient permissions.'); };
-  const mustOwn = (id) => { if (!isAdmin() && !ownsStore(id)) throw fail('permission-denied', 'Missing or insufficient permissions.'); };
-  const storeList = () => sortStores(Object.entries(db.stores).map(([id, s]) => ({ id, ...s })));
-
-  return {
-    mode: 'demo',
-    resetDemo() { localStorage.removeItem(KEY); db = seed(); persist(); },
-
-    onAuth(cb) {
-      authListeners.add(cb);
-      setTimeout(() => cb(user), 0);
-      return () => authListeners.delete(cb);
-    },
-    async signInGoogle() {
-      const email = window.prompt('Demo mode: enter any Gmail address to sign in with Google:');
-      if (!email) return;
-      const cleanEmail = lower(email.trim());
-      let acc = db.accounts[cleanEmail];
-      if (!acc) {
-        acc = { password: '', uid: `g-${cleanEmail}`, verified: true };
-        db.accounts[cleanEmail] = acc;
-        persist();
-      }
-      setUser({ uid: acc.uid, email: cleanEmail, name: cleanEmail.split('@')[0], provider: 'google.com', verified: true });
-    },
-    async signInEmail(email, pw) {
-      const cleanEmail = lower(email?.trim());
-      if (!cleanEmail || !pw) throw fail('auth/invalid-credential', 'Please enter email and password');
-      let acc = db.accounts[cleanEmail];
-      if (!acc) {
-        // Self-registration in demo mode: auto-create account for entered credentials
-        acc = { password: pw, uid: `u-${uid()}`, verified: true };
-        db.accounts[cleanEmail] = acc;
-        persist();
-      } else if (acc.password !== pw) {
-        throw fail('auth/invalid-credential', 'Wrong email or password');
-      }
-      setUser({ uid: acc.uid, email: cleanEmail, name: '', provider: 'password', verified: !!acc.verified });
-    },
-    async signOut() { setUser(null); },
-    async resetPassword() { /* nothing to send in demo mode */ },
-    async changePassword(pw) {
-      const acc = Object.values(db.accounts).find((a) => a.uid === user?.uid);
-      if (acc) { acc.password = pw; persist(); }
-    },
-    sendVerification: async () => {
-      const acc = db.accounts[user?.email];
-      if (acc) { acc.verified = true; persist(); }
-    },
-    refreshUser: async () => {
-      const acc = db.accounts[user?.email];
-      if (acc) setUser({ ...user, verified: !!acc.verified });
-      return user;
-    },
-    async createOwnerAccount(email) {
-      mustAdmin();
-      const cleanEmail = lower(email?.trim());
-      const acc = db.accounts[cleanEmail];
-      if (acc) return null;
-      const id = `u-${uid()}`;
-      db.accounts[cleanEmail] = { password: 'password123', uid: id, verified: true };
-      persist();
-      return id;
-    },
-
-    watchCentre: (cb) => watch(() => db.centre, cb),
-    async updateCentre(patch) { mustAdmin(); db.centre = { ...db.centre, ...clean(patch) }; persist(); },
-    async getAdmins() { return db.admins ? [...db.admins] : null; },
-    async claimAdmin(email) {
-      if (db.admins) throw fail('permission-denied', 'Admin already exists');
-      db.admins = [lower(email)]; persist();
-    },
-    async setAdmins(emails) { mustAdmin(); db.admins = emails.map(lower); persist(); },
-
-    watchStores: (cb) => watch(storeList, cb),
-    watchStore: (id, cb) => watch(() => (db.stores[id] ? { id, ...db.stores[id] } : null), cb),
-    watchOwnedStores: (u, cb) => watch(() => storeList().filter((s) => s.ownerUid === u.uid
-      || (u.verified && s.ownerEmail && s.ownerEmail === u.email)), cb),
-    async createStore(data) {
-      mustAdmin();
-      const id = `s-${uid()}`;
-      db.stores[id] = clean(data); db.items[id] = {}; db.reviews[id] = {};
-      persist();
-      return id;
-    },
-    async updateStore(id, patch) { mustOwn(id); db.stores[id] = { ...db.stores[id], ...clean(patch) }; persist(); },
-    async updateStores(patches) {
-      mustAdmin();
-      for (const [id, p] of Object.entries(patches)) db.stores[id] = { ...db.stores[id], ...clean(p) };
-      persist();
-    },
-    async deleteStore(id) {
-      mustAdmin();
-      delete db.stores[id]; delete db.items[id]; delete db.reviews[id];
-      persist();
-    },
-
-    watchItems: (storeId, cb) => watch(() => sortItems(Object.entries(db.items[storeId] || {}).map(([id, it]) => ({ id, ...it }))), cb),
-    async addItem(storeId, data) {
-      mustOwn(storeId);
-      (db.items[storeId] ??= {})[`i-${uid()}`] = { ...clean(data), createdAt: Date.now() };
-      persist();
-    },
-    async updateItem(storeId, itemId, patch) {
-      mustOwn(storeId);
-      db.items[storeId][itemId] = { ...db.items[storeId][itemId], ...clean(patch) };
-      persist();
-    },
-    async deleteItem(storeId, itemId) { mustOwn(storeId); delete db.items[storeId][itemId]; persist(); },
-
-    watchReviews: (storeId, cb) => watch(() => Object.entries(db.reviews[storeId] || {})
-      .map(([id, r]) => ({ id, ...r })).sort((a, b) => b.createdAt - a.createdAt), cb),
-    async saveReview(storeId, u, { rating, text }) {
-      if (!user || user.uid !== u.uid) throw fail('permission-denied', 'Please sign in');
-      (db.reviews[storeId] ??= {})[u.uid] = { rating, text, name: u.name || 'Customer', createdAt: Date.now() };
-      persist();
-    },
-    async deleteReview(storeId, reviewUid) {
-      if (!user || (user.uid !== reviewUid && !isAdmin())) throw fail('permission-denied', 'Not allowed');
-      delete db.reviews[storeId]?.[reviewUid];
-      persist();
-    },
   };
 }
 

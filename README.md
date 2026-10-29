@@ -41,17 +41,26 @@ Interface languages: English, 中文, Bahasa Melayu. Prices in RM, times in Mala
   paid "Cloud Storage" add-on is not needed.
 * No server to run or maintain. All libraries are kept in `vendor/`, so the site does not depend on other CDNs (except Firebase's own SDK).
 
-## Try it now (demo mode)
+The starter map follows the [Digital Niaga Kim Seng floor plan](https://digital-niaga-five.vercel.app/)
+for Seksyen 17, Petaling Jaya: 11 stalls, tables, pillars, a beverage counter,
+toilet, walls and entrances. A copy of the supplied plan is in
+[docs/kim-seng-floor-plan-reference.png](docs/kim-seng-floor-plan-reference.png).
+The 3D sizes are approximate.
 
-For a local preview, use **demo mode**. It keeps data in your browser and does not contact the live Firebase project.
+## Run locally
+
+The site uses the configured `kimseng-hawker` Firebase project, including when
+run locally. Changes made while signed in as a manager or stall owner affect
+live data.
 
 ```bash
 node serve.cjs
 ```
 
-Then open [customer preview](http://127.0.0.1:8000/?demo=1) or [staff preview](http://127.0.0.1:8000/staff.html?demo=1). Demo logins:
-* Stall owner / Manager: enter any email and password in demo mode to sign in or register instantly.
-* Manager: tap *Continue with Google*, type any Gmail, then *Yes, make me the manager*.
+Then open [customer site](http://localhost:8000/) or
+[staff site](http://localhost:8000/staff.html). Staff sign in with their real
+Firebase account. Google sign-in on a local address requires that address in
+Firebase Authentication's authorized domains.
 
 ## Going live
 
@@ -64,8 +73,8 @@ Then give the owner **[docs/USER_GUIDE.md](docs/USER_GUIDE.md)**.
 index.html, staff.html               customer site, staff site
 owner.html, admin.html               old links, forward to staff.html
 css/style.css                        all styling
-js/config.js                         ← paste Firebase config here
-js/api.js                            database + login (Firebase or demo)
+js/config.js                         Firebase project configuration
+js/api.js                            Firestore database + Firebase login
 js/status.js                         open/closed logic (Malaysia time)
 js/floorplan.js                      3D floor plan viewer + editor (three.js)
 js/customer.js, staff.js             page logic

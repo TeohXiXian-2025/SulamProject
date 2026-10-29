@@ -7,7 +7,7 @@ import { t, pick, pickAlt, langSwitcher, bindLangSwitcher } from './i18n.js';
 import { centreStatus, storeStatus, statusBox, nowLocal, overrideActive, todayStr } from './status.js';
 import { $, esc, toast, stars, pic, ICONS, bigIcon, CATEGORIES, categoryColor, fmtPrice } from './util.js';
 import { art, storeArt } from './art.js';
-import { DEFAULT_CENTRE } from './seed.js';
+import { DEFAULT_CENTRE, kimSengLayoutMigration } from './seed.js';
 import {
   saving, statusChoicesHtml, bindStatusChoices, hoursEditorHtml, bindHoursEditor,
   photoPickerHtml, bindPhotoPicker, openItemDialog, itemCardHtml,
@@ -165,7 +165,6 @@ function shell(back, body, title) {
         </div>
       </div>
     </header>
-    ${api.mode === 'demo' ? `<div class="banner demo">${t('demoBanner')}</div>` : ''}
     <div class="staff-layout wrap">${staffNav()}<main class="staff-main">
       ${back ? `<a class="back-link" href="${back}">${ICONS.back}<span>${t('back')}</span></a>` : ''}
       <div class="stack" id="body">${body}</div>
@@ -190,7 +189,6 @@ function renderLogin() {
       </div>
       <div class="tiles" aria-hidden="true"></div>
     </header>
-    ${api.mode === 'demo' ? `<div class="banner demo">${t('demoBanner')}</div>` : ''}
     <main class="wrap stack login-main">
       <div class="login-intro">
         <span class="eyebrow">${esc(c.name || t('centreName'))}</span>
@@ -237,7 +235,7 @@ function renderClaim() {
   $('#claim', body).onclick = async (e) => {
     const ok = await saving(e.currentTarget, async () => {
       await api.claimAdmin(S.user.email);
-      if (api.mode === 'firebase') await api.updateCentre(DEFAULT_CENTRE);
+      await api.updateCentre(DEFAULT_CENTRE);
     });
     if (!ok) return;
     S.admins = [S.user.email];
@@ -634,7 +632,13 @@ async function renderFloor(force) {
   }
   disposePlan();
   const floor = S.centre.floor || DEFAULT_CENTRE.floor;
+  const migration = kimSengLayoutMigration(S.centre, S.all);
   const body = shell('#/', `
+    ${migration ? `<div class="card stack">
+      <b>${t('kimSengLayoutTitle')}</b>
+      <p class="help" style="margin:0">${t('kimSengLayoutHelp')}</p>
+      <button type="button" class="btn green big" id="apply-kimseng">${t('kimSengLayoutApply')}</button>
+    </div>` : ''}
     <div class="help" style="font-size:1rem">${t('floorHelp')}</div>
     <div class="fp-wrap fp-editor" id="fp"></div>
     <div class="card stack" id="sel-box">
@@ -666,7 +670,10 @@ async function renderFloor(force) {
     </div></details>`, t('tileFloor'));
   const { createFloorPlan, EXTRA_TYPES } = await import('./floorplan.js');
   if (!$('#fp') || route()[0] !== 'floor') return;
-  const markDirty = (v = true) => { planDirty = v; };
+  const markDirty = (v = true) => {
+    planDirty = v;
+    if ($('#apply-kimseng')) $('#apply-kimseng').disabled = v;
+  };
   const selBtns = [...body.querySelectorAll('[data-act]')];
   plan = createFloorPlan($('#fp'), {
     editable: true,
@@ -682,6 +689,9 @@ async function renderFloor(force) {
   selBtns.forEach((b) => { b.disabled = true; });
   plan.setData(planData(null));
   planDirty = false;
+  $('#apply-kimseng')?.addEventListener('click', (e) => {
+    saving(e.currentTarget, () => api.applyKimSengLayout(migration), t('kimSengLayoutSaved'));
+  });
   body.querySelectorAll('[data-add]').forEach((b) => { if (EXTRA_TYPES[b.dataset.add]) b.onclick = () => plan.addExtra(b.dataset.add); });
   body.querySelectorAll('[data-view]').forEach((b) => { b.onclick = () => plan.setView(b.dataset.view); });
   selBtns.forEach((b) => {

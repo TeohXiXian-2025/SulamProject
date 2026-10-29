@@ -139,10 +139,6 @@ input:focus, select:focus, textarea:focus, .btn:focus-visible, a:focus-visible, 
   background: #e8e4db;
   border: 1px solid var(--line);
 }
-.fp-hint {
-  background: rgba(32, 23, 18, 0.85);
-  color: #fff;
-}
 
 /* Mobile Responsiveness Refinements */
 @media (max-width: 640px) {

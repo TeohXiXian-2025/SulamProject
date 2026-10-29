@@ -19,8 +19,18 @@ const mime = {
 
 http.createServer((request, response) => {
   let pathname;
-  try { pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname); }
+  let url;
+  try {
+    url = new URL(request.url, 'http://localhost');
+    pathname = decodeURIComponent(url.pathname);
+  }
   catch { response.writeHead(400).end('Bad request'); return; }
+  // Firebase Authentication authorizes localhost, not the numeric loopback host.
+  if (request.headers.host?.split(':')[0] === '127.0.0.1') {
+    url.searchParams.delete('demo');
+    response.writeHead(302, { Location: `http://localhost:${port}${url.pathname}${url.search}` }).end();
+    return;
+  }
   if (pathname.split('/').some((part) => part.startsWith('.'))) {
     response.writeHead(404).end('Not found');
     return;

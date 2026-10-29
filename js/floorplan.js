@@ -8,14 +8,15 @@ import { OrbitControls } from '../vendor/OrbitControls.js';
 import { t } from './i18n.js';
 
 export const EXTRA_TYPES = {
-  table: { height: 0.45, color: '#b08968', w: 2, h: 1 },
+  table: { height: 0.86, color: '#cfc9bf', w: 1.6, h: 1.6 },
   entrance: { height: 0.06, color: '#22c55e', w: 2, h: 1, label: 'entrance' },
-  wall: { height: 1.8, color: '#9ca3af', w: 4, h: 1 },
-  toilet: { height: 1.3, color: '#93c5fd', w: 1, h: 2, label: 'toilet' },
+  wall: { height: 0.8, color: '#65747b', w: 4, h: 1 },
+  toilet: { height: 1.8, color: '#a5b4be', w: 2, h: 2, label: 'toilet' },
   sink: { height: 0.9, color: '#cbd5e1', w: 1, h: 1, label: 'sink' },
-  pillar: { height: 2.4, color: '#d6d3d1', w: 1, h: 1 },
+  pillar: { height: 3, color: '#303638', w: 1.2, h: 1.2 },
+  counter: { height: 1.08, color: '#a5b4be', w: 3, h: 3 },
 };
-const STORE_HEIGHT = 1.3;
+const STORE_HEIGHT = 0.9;
 const CLOSED_COLOR = '#a8a29e';
 
 function overlaps(a, b) {
@@ -178,12 +179,28 @@ export function createFloorPlan(container, { editable = false, onSelect = () => 
     const group = new THREE.Group();
     const height = o.kind === 'store' ? STORE_HEIGHT : EXTRA_TYPES[o.type]?.height ?? 1;
     const mat = new THREE.MeshStandardMaterial({ color: o.color, roughness: 0.6 });
-    const body = new THREE.Mesh(new THREE.BoxGeometry(o.w - 0.12, height, o.h - 0.12), mat);
-    body.position.y = height / 2;
+    const isTable = o.type === 'table';
+    const body = new THREE.Mesh(
+      isTable
+        ? new THREE.CylinderGeometry(Math.min(o.w, o.h) / 2 - 0.06, Math.min(o.w, o.h) / 2 - 0.06, 0.12, 24)
+        : new THREE.BoxGeometry(o.w - 0.12, height, o.h - 0.12),
+      mat,
+    );
+    body.position.y = isTable ? height : height / 2;
     body.castShadow = height > 0.2;
     body.receiveShadow = true;
     body.userData.key = o.key;
     group.add(body);
+
+    if (isTable) {
+      const leg = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.12, 0.2, height - 0.12, 12),
+        new THREE.MeshStandardMaterial({ color: '#697777', roughness: 0.7 }),
+      );
+      leg.position.y = (height - 0.12) / 2;
+      leg.userData.key = o.key;
+      group.add(leg);
+    }
 
     if (o.kind === 'store') {
       // Darker counter strip on top for a little detail.

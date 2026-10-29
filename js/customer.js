@@ -9,6 +9,7 @@ import { KINDS } from './forms.js';
 
 const api = await getApi();
 const app = $('#app');
+const GOOGLE_MAPS_URL = 'https://www.google.com/maps?q=Restaurant+Kim+Seng,+Seksyen+17,+46400+Petaling+Jaya,+Selangor,+Malaysia&ftid=0x31cc495d298b9beb:0xfe6a13c3cd6df28d';
 document.body.classList.add('customer');
 
 const state = {
@@ -63,7 +64,6 @@ function render(force = false) {
           </div>
         </div>
       </header>
-      ${api.mode === 'demo' ? `<div class="banner demo">${t('demoBanner')}</div>` : ''}
       <main class="wrap page" id="page"></main>
       <nav class="bottom-nav" aria-label="Mobile navigation">
         <a href="#/" class="${r.page !== 'map' ? 'active' : ''}">${ICONS.bowl}<span>${t('navStalls')}</span></a>
@@ -101,8 +101,8 @@ function renderHome(force) {
         <div class="centre-hero-body">
           <div class="centre-hero-status" id="shop-status"></div>
           <div class="centre-hero-actions">
-            <a class="btn hero-map-link" href="#/map">
-              ${ICONS.pin}<span>${t('navMap')}</span>
+            <a class="btn hero-map-link" href="${esc(GOOGLE_MAPS_URL)}">
+              ${ICONS.pin}<span>${t('googleMaps')}</span>
             </a>
           </div>
         </div>
@@ -458,7 +458,7 @@ async function renderMap(selectedId) {
           <span class="legend-item"><i style="background:#cfc9bf"></i>${t('legendTables')}</span>
         </div>
       </div>
-      <div class="fp-wrap" id="fp"><div class="fp-hint" id="fp-hint">${t('tapStall')}</div></div>
+      <div class="fp-wrap" id="fp"></div>
       <div id="map-card"></div>
     </div>`;
     let createFloorPlan;
@@ -497,7 +497,6 @@ function showMapCard(id) {
   const box = $('#map-card');
   if (!box) return;
   const s = id && state.stores.find((x) => x.id === id);
-  $('#fp-hint')?.classList.toggle('hidden', !!s);
   if (!s) { box.innerHTML = ''; return; }
   const st = storeStatus(s, state.centre);
   box.innerHTML = `<div class="card map-card">

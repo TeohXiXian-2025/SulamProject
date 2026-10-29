@@ -81,7 +81,7 @@ The top card shows if the kopitiam is open, how many stalls are open, and a big
 
 | Tile · 格子 | What it does · 做什么 |
 |---|---|
-| **Stalls & owners · 档口和档主** | **Add a stall**. **Edit**: number, name, type, mixed-rice tick box, **owner's email** (Gmail → Google login; other email → they get a set-password email). **Remove owner** stops their access at once. **Delete** is inside Edit and asks twice. **Menu** lets you update a stall for its owner. "Fill empty menus with sample dishes" is for demonstrations only. |
+| **Stalls & owners · 档口和档主** | **Add a stall**. **Edit**: number, name, type, mixed-rice tick box, **owner's email** (Gmail → Google login; other email → they get a set-password email). **Remove owner** stops their access at once. **Delete** is inside Edit and asks twice. **Menu** lets you update a stall for its owner. |
 | **Floor plan · 平面图** | Drag blocks with your finger. Tap one → Turn / Wider / Narrower / Longer / Shorter / Remove. Add tables, entrance, toilet, wall, pillar, sink. Press **Save floor plan**. |
 | **Name, hours & notice · 名称时间公告** | Shop name (金城茶餐室 / Restoran Kim Seng), yellow notice for customers, kopitiam open/close and opening hours. |
 | **Print QR codes · 打印二维码** | Big poster, table cards (with table numbers) or stall cards (opens that stall's menu). Tap **Print**. |
