@@ -12,9 +12,34 @@ They get an icon called **金城 Staff** and never need to type the address.
 
 Customers never see a login button. 顾客页面没有登录按钮。
 
+**Contents · 目录:** [Customers 顾客](#customers-顾客) · [Logging in 登录](#logging-in-登录) ·
+[Stall owners 档主](#stall-owners-档主) · [Manager 管理员](#manager-管理员)
+
 ---
 
-## Logging in · 登录
+## Customers 顾客
+
+Scan the QR code on the poster or table, or open `https://kimseng-hawker.web.app`.
+扫描海报或桌上的二维码，或打开网址。不用下载 app，不用登录。
+
+* **Language · 语言** — tap **中文 / English / BM** at the top.
+* **We are OPEN / CLOSED** — the big green or red box shows if the kopitiam is open now. A yellow box shows notices (e.g. holidays).
+  绿色 = 营业中，红色 = 休息；黄色是公告。
+* **Stall list · 档口列表** — every stall with its number, picture and status (e.g. "Open · until 15:00" or "Closed · opens Fri 07:00").
+  Tap **Open now only · 只看营业中** to hide closed stalls, or type in **Search** to find a stall.
+* **Tap a stall · 点档口** to see:
+  * its **menu** with pictures, descriptions and prices — finished food shows **SOLD OUT · 卖完了**;
+  * for the **economy mixed rice** stall: a **price guide** (e.g. 1 meat + 2 veg) and "dishes usually cooked" — only an estimate, check at the stall;
+  * **Where is it? · 在哪里** — opens the map with a red pin on the stall;
+  * **Call stall** (if the stall gave a phone number) and **Opening hours · 营业时间**;
+  * **Reviews · 评价** — tap **Write a review**, sign in with Google, choose the stars and write a few words. One review per person per stall; you can change or delete it.
+* **Map · 地图** (bottom bar) — 3D floor plan. Green blocks are open, grey are closed. Tap a stall to see the pin and a **Menu** button.
+  Drag with one finger to turn the view, pinch to zoom.
+* The bottom bar **Stalls · 档口 / Map · 地图** is always there to go back.
+
+---
+
+## Logging in 登录
 
 * **Gmail** → tap **Continue with Google · 用 Google 登录**. No password. 不需要密码。
 * **Other email · 其他电邮** → the first time, open the email from Firebase and **set your own password**.
@@ -23,7 +48,7 @@ Customers never see a login button. 顾客页面没有登录按钮。
 
 ---
 
-## Stall owners · 档主
+## Stall owners 档主
 
 The home screen shows your stall, whether it is open, and one big button:
 
@@ -47,7 +72,7 @@ Every screen has a big **Back · 返回** button at the top left.
 
 ---
 
-## Manager · 管理员
+## Manager 管理员
 
 Log in with **Google** (kimseng.hawker@gmail.com or the owner's own Gmail).
 

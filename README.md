@@ -2,6 +2,26 @@
 
 A free website for 金城茶餐室 Restoran Kim Seng, in a warm kopitiam style with big text for older users.
 
+## Website
+
+| Who | Link |
+|---|---|
+| **Customers** 顾客 (the QR code) | **https://kimseng-hawker.web.app** |
+| **Stall owners and manager** 档主 / 管理员 | **https://kimseng-hawker.web.app/staff** |
+
+## How to use
+
+Step-by-step guide in English and 中文, for each view: **[docs/USER_GUIDE.md](docs/USER_GUIDE.md)**
+
+* [Customers 顾客](docs/USER_GUIDE.md#customers-顾客) — find stalls, menus, prices, open / closed, map, reviews
+* [Logging in 登录](docs/USER_GUIDE.md#logging-in-登录) — Gmail or email + own password
+* [Stall owners 档主](docs/USER_GUIDE.md#stall-owners-档主) — close today, holiday, hours, menu, sold out, photos
+* [Manager 管理员](docs/USER_GUIDE.md#manager-管理员) — stalls & owners, floor plan, shop name & hours, QR printing, reviews, managers
+
+Setting up or handing over the project: [docs/SETUP.md](docs/SETUP.md).
+
+## Pages
+
 | Page | Who | What they can do |
 |---|---|---|
 | `index.html` | Customers (no login) | See all stalls, open/closed status, menus with photos and prices, 3D floor plan with a pin, reviews per stall (Google sign-in to write) |
