@@ -3,12 +3,14 @@
 import { firebaseConfig } from './config.js?v=3';
 import { DEFAULT_CENTRE } from './seed.js?v=3';
 import { sortStores, sortItems } from './util.js?v=3';
+import { isPreview, previewApi } from './preview.js?v=3';
 
 const FIREBASE_VERSION = '10.12.2';
 
 let apiPromise;
 export function getApi() {
-  apiPromise ??= firebaseApi(firebaseConfig);
+  // ?preview uses practice data in this browser instead of the real project.
+  apiPromise ??= isPreview() ? Promise.resolve(previewApi()) : firebaseApi(firebaseConfig);
   return apiPromise;
 }
 
@@ -62,25 +64,51 @@ async function firebaseApi(config) {
 
   return {
     onAuth: (cb) => A.onAuthStateChanged(auth, (u) => cb(mapUser(u))),
-    signInGoogle: () => A.signInWithPopup(auth, new A.GoogleAuthProvider()),
-    signInEmail: (email, pw) => A.signInWithEmailAndPassword(auth, email, pw),
+    // Always show the Google account chooser so a shared computer can switch
+    // accounts. Falls back to a full-page sign-in if the popup is blocked.
+    async signInGoogle() {
+      const p = new A.GoogleAuthProvider();
+      p.setCustomParameters({ prompt: 'select_account' });
+      try {
+        await A.signInWithPopup(auth, p);
+      } catch (e) {
+        if (e.code === 'auth/popup-blocked') await A.signInWithRedirect(auth, p);
+        else if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') throw e;
+      }
+    },
+    signInEmail: (email, pw) => A.signInWithEmailAndPassword(auth, email.trim(), pw),
     signOut: () => A.signOut(auth),
-    resetPassword: (email) => A.sendPasswordResetEmail(auth, email),
+    resetPassword: (email) => A.sendPasswordResetEmail(auth, email.trim()),
     changePassword: (pw) => A.updatePassword(auth.currentUser, pw),
     sendVerification: () => A.sendEmailVerification(auth.currentUser),
     refreshUser: async () => {
       await auth.currentUser?.reload();
+      // New token so the database sees a just-verified email straight away.
+      await auth.currentUser?.getIdToken(true);
       return mapUser(auth.currentUser);
     },
-    // Creates an auth account for a stall owner with a temporary random password,
-    // then emails them a password-reset link so they choose their own password.
+    // Creates a login for a non-Gmail stall owner and emails them a link to
+    // choose their own password. Uses a temporary second Firebase app so the
+    // manager stays signed in. Returns the new account id, or null if the email
+    // already had a login (a set-password email is still sent).
     async createOwnerAccount(email) {
-      const cred = await A.createUserWithEmailAndPassword(auth, email, randomPassword());
-      await A.sendPasswordResetEmail(auth, email);
-      return cred.user.uid;
+      const tmp = appMod.initializeApp(config, `tmp-${Date.now()}`);
+      let uidOut = null;
+      try {
+        const tmpAuth = A.initializeAuth(tmp, { persistence: A.inMemoryPersistence });
+        const cred = await A.createUserWithEmailAndPassword(tmpAuth, email.trim(), randomPassword());
+        uidOut = cred.user.uid;
+        await A.signOut(tmpAuth);
+      } catch (e) {
+        if (e.code !== 'auth/email-already-in-use') throw e;
+      } finally {
+        await appMod.deleteApp(tmp).catch(() => {});
+      }
+      await A.sendPasswordResetEmail(auth, email.trim());
+      return uidOut;
     },
 
-    watchCentre: (cb) => F.onSnapshot(centreRef, (snap) => cb(fixOldName(snap.data() || DEFAULT_CENTRE)), onErr),
+    watchCentre: (cb) => F.onSnapshot(centreRef, (snap) => cb(fixOldName({ ...DEFAULT_CENTRE, ...snap.data() })), onErr),
     updateCentre: (patch) => F.setDoc(centreRef, clean(patch), { merge: true }),
     getAdmins: async () => (await F.getDoc(adminsRef)).data()?.emails || null,
     claimAdmin: (email) => F.setDoc(adminsRef, { emails: [lower(email)] }),
@@ -89,9 +117,11 @@ async function firebaseApi(config) {
     watchStores: (cb) => F.onSnapshot(storesCol, (snap) => cb(sortStores(snap.docs.map(withId))), onErr),
     watchStore: (id, cb) => F.onSnapshot(F.doc(db, 'stores', id), (snap) => cb(snap.exists() ? withId(snap) : null), onErr),
     watchOwnedStores: (u, cb) => {
-      let byUid = [];
-      let byEmail = [];
+      // Wait for both lookups so an owner never briefly sees "no stall".
+      let byUid = null;
+      let byEmail = u.verified && u.email ? null : [];
       const emit = () => {
+        if (!byUid || !byEmail) return;
         const seen = new Set();
         const merged = [...byUid, ...byEmail].filter((s) => !seen.has(s.id) && seen.add(s.id));
         cb(sortStores(merged));
@@ -120,13 +150,19 @@ async function firebaseApi(config) {
       batch.set(F.doc(storesCol), clean(migration.newStore));
       return batch.commit();
     },
-    deleteStore: (id) => F.deleteDoc(F.doc(db, 'stores', id)),
+    // Removes the stall's menu and reviews too, so nothing is left behind.
+    async deleteStore(id) {
+      for (const sub of ['items', 'reviews']) {
+        const snap = await F.getDocs(F.collection(db, 'stores', id, sub));
+        await Promise.all(snap.docs.map((d) => F.deleteDoc(d.ref)));
+      }
+      await F.deleteDoc(F.doc(db, 'stores', id));
+    },
 
     watchItems: (storeId, cb) => F.onSnapshot(F.collection(db, 'stores', storeId, 'items'),
-      (snap) => cb(sortItems(snap.docs.map(withId))), onErr),
-    addItem: (storeId, data) => F.addDoc(F.collection(db, 'stores', storeId, 'items'), {
-      ...clean(data), createdAt: F.serverTimestamp(),
-    }),
+      (snap) => cb(sortItems(snap.docs.map((d) => ({ ...withId(d), createdAt: millis(d.data().createdAt) })))), onErr),
+    // createdAt is a plain number so dishes keep the order they were added in.
+    addItem: (storeId, data) => F.addDoc(F.collection(db, 'stores', storeId, 'items'), clean({ ...data, createdAt: Date.now() })),
     updateItem: (storeId, itemId, patch) => F.updateDoc(F.doc(db, 'stores', storeId, 'items', itemId), clean(patch)),
     deleteItem: (storeId, itemId) => F.deleteDoc(F.doc(db, 'stores', storeId, 'items', itemId)),
 
