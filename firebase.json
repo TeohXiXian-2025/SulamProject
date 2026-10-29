@@ -9,8 +9,17 @@
       "firestore.rules",
       "docs/**",
       "README.md",
+      ".git/**",
+      "**/.git/**",
+      ".firebase/**",
+      "**/.firebase/**",
+      ".firebaserc",
+      ".gitignore",
+      ".nojekyll",
+      "serve.cjs",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "*.log"
     ],
     "headers": [
       {
