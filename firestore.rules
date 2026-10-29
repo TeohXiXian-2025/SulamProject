@@ -1,0 +1,89 @@
+rules_version = '2';
+
+// Security rules for the Kim Seng Hawker Centre website.
+// Paste this into Firebase console → Firestore Database → Rules → Publish.
+//
+//   Everyone (no login) : read stalls, menus, reviews, centre info
+//   Google-signed-in    : write / delete ONE review per stall (their own)
+//   Stall owner         : edit their own stall's info, status, hours, menu
+//   Admin               : everything (emails listed in config/admins)
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function adminDoc() {
+      return /databases/$(database)/documents/config/admins;
+    }
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.email != null
+        && exists(adminDoc())
+        && request.auth.token.email.lower() in get(adminDoc()).data.emails;
+    }
+    function ownsStore(storeId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/stores/$(storeId)).data.ownerUid == request.auth.uid;
+    }
+    function smallPhoto(data) {
+      return !('photo' in data) || (data.photo is string && data.photo.size() < 150000);
+    }
+
+    match /config/admins {
+      allow read: if signedIn();
+      // First-time setup: the very first verified Google account may claim
+      // admin, only while no admin list exists yet.
+      allow create: if signedIn()
+        && request.auth.token.email_verified == true
+        && request.resource.data.emails == [request.auth.token.email.lower()];
+      allow update: if isAdmin()
+        && request.resource.data.emails is list
+        && request.resource.data.emails.size() > 0;
+    }
+
+    match /config/centre {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /stores/{storeId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if smallPhoto(request.resource.data) && (isAdmin() || (
+        signedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'name', 'nameZh', 'description', 'descriptionZh', 'phone', 'photo',
+          'hours', 'override', 'mixedRice'
+        ])
+      ));
+
+      match /items/{itemId} {
+        allow read: if true;
+        allow delete: if isAdmin() || ownsStore(storeId);
+        allow create, update: if (isAdmin() || ownsStore(storeId))
+          && smallPhoto(request.resource.data)
+          && request.resource.data.name is string
+          && request.resource.data.name.size() <= 80;
+      }
+
+      // Review document id = the reviewer's user id, so one review each.
+      match /reviews/{reviewerId} {
+        allow read: if true;
+        allow create, update: if signedIn()
+          && request.auth.uid == reviewerId
+          && request.resource.data.keys().hasOnly(['rating', 'text', 'name', 'createdAt'])
+          && request.resource.data.rating is int
+          && request.resource.data.rating >= 1
+          && request.resource.data.rating <= 5
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 500
+          && request.resource.data.name is string
+          && request.resource.data.name.size() <= 60
+          && request.resource.data.createdAt == request.time;
+        allow delete: if signedIn() && (request.auth.uid == reviewerId || isAdmin());
+      }
+    }
+  }
+}
