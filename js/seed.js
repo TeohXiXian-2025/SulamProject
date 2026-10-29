@@ -1,12 +1,13 @@
-// Starter data: the 10 stalls of Kim Seng and a default floor plan.
-// The admin can load these with one click and then edit everything.
+// Starter data: the shop, its 10 stalls, a default floor plan and sample
+// menus. The manager can load these with one click and then edit everything.
+import { art } from './art.js';
 
 const weekday = (open, close, offDays = []) =>
   [0, 1, 2, 3, 4, 5, 6].map((d) => (offDays.includes(d) ? null : { open, close }));
 
 export const DEFAULT_CENTRE = {
-  name: 'Kim Seng Hawker Centre',
-  nameZh: '金成小贩中心',
+  name: 'Restoran Kim Seng',
+  nameZh: '金城茶餐室',
   address: '',
   announcement: '',
   hours: weekday('06:30', '22:00'),
@@ -50,41 +51,81 @@ export const STARTER_STORES = [
   ownerUid: '',
   ownerEmail: '',
   mixedRice: s.type === 'mixedRice'
-    ? { prices: [
-      { label: '1 meat + 2 veg', labelZh: '一肉两菜', price: 7 },
-      { label: '2 meat + 1 veg', labelZh: '两肉一菜', price: 9 },
-      { label: 'Extra veg', labelZh: '加菜', price: 1.5 },
-      { label: 'Extra meat', labelZh: '加肉', price: 3 },
-    ] }
+    ? {
+      note: '',
+      prices: [
+        { label: '1 meat + 2 veg', labelZh: '一肉两菜', price: 7 },
+        { label: '2 meat + 1 veg', labelZh: '两肉一菜', price: 9 },
+        { label: 'Extra veg', labelZh: '加菜', price: 1.5 },
+        { label: 'Extra meat', labelZh: '加肉', price: 3 },
+      ],
+    }
     : null,
   // Stalls 1–5 along the top wall, 6–10 along the bottom wall.
   block: i < 5 ? { x: 1 + i * 4, y: 0, w: 3, h: 2 } : { x: 1 + (i - 5) * 4, y: 9, w: 3, h: 2 },
   ...s,
 }));
 
-// A few example foods so the demo is not empty.
-export const DEMO_ITEMS = {
+// Example dishes so the website looks complete for a first demonstration.
+// Prices and dishes are only examples: stall owners replace them.
+const m = (name, nameZh, price, pic, description, extra = {}) =>
+  ({ name, nameZh, price, pic, description, available: true, section: '', ...extra });
+
+const SAMPLE = {
   1: [
-    { name: 'Kopi O', nameZh: '咖啡乌', price: 1.8, section: 'Hot', sectionZh: '热' },
-    { name: 'Teh Tarik', nameZh: '拉茶', price: 2.2, section: 'Hot', sectionZh: '热' },
-    { name: 'Iced Milo', nameZh: '冰美禄', price: 3.2, section: 'Cold', sectionZh: '冷' },
-    { name: 'Barley', nameZh: '薏米水', price: 2, section: 'Cold', sectionZh: '冷', available: false },
+    m('Kopi O', '咖啡乌', 1.8, 'kopiHot', 'Strong local black coffee with sugar.', { section: 'Hot', sectionZh: '热饮' }),
+    m('Teh Tarik', '拉茶', 2.2, 'tehHot', 'Pulled milk tea, smooth and frothy.', { section: 'Hot', sectionZh: '热饮' }),
+    m('Kopi Peng', '咖啡冰', 2.8, 'kopi', 'Iced coffee with condensed milk.', { section: 'Cold', sectionZh: '冷饮' }),
+    m('Milo Dinosaur', '美禄恐龙', 4.5, 'milo', 'Iced Milo topped with extra Milo powder.', { section: 'Cold', sectionZh: '冷饮' }),
+    m('Barley', '薏米水', 2.0, 'barley', 'Homemade barley drink, lightly sweet.', { section: 'Cold', sectionZh: '冷饮', available: false }),
   ],
   2: [
-    { name: 'Sweet & sour pork', nameZh: '咕咾肉', kind: 'meat' },
-    { name: 'Curry chicken', nameZh: '咖喱鸡', kind: 'meat' },
-    { name: 'Stir-fried cabbage', nameZh: '炒包菜', kind: 'veg' },
-    { name: 'Long beans', nameZh: '炒长豆', kind: 'veg' },
-    { name: 'Steamed egg', nameZh: '蒸蛋', kind: 'egg' },
-    { name: 'Fried fish', nameZh: '炸鱼', kind: 'fish' },
+    m('Sweet & sour pork', '咕咾肉', null, 'sweetSour', '', { kind: 'meat' }),
+    m('Curry chicken', '咖喱鸡', null, 'curry', '', { kind: 'meat' }),
+    m('Fried fish', '炸鱼', null, 'fish', '', { kind: 'fish' }),
+    m('Stir-fried cabbage', '炒包菜', null, 'veg', '', { kind: 'veg' }),
+    m('Long beans', '炒长豆', null, 'beans', '', { kind: 'veg' }),
+    m('Steamed egg', '蒸蛋', null, 'egg', '', { kind: 'egg' }),
+    m('Braised tofu', '卤豆腐', null, 'tofu', '', { kind: 'egg' }),
+  ],
+  3: [
+    m('Kung pao chicken', '宫保鸡丁', 12, 'wok', 'Wok-fried chicken with dried chilli and cashew.'),
+    m('Sweet & sour fish', '酸甜鱼', 18, 'fish', 'Crispy fish fillet in tangy sweet and sour sauce.'),
+    m('Egg fried rice', '蛋炒饭', 7.5, 'friedRice', 'Fragrant wok-fried rice with egg and spring onion.'),
+    m('Kangkung belacan', '马来风光', 8, 'kangkung', 'Water spinach fried with spicy shrimp paste.', { available: false }),
   ],
   4: [
-    { name: 'Curry mee', nameZh: '咖喱面', price: 9 },
-    { name: 'Fried kuey teow', nameZh: '炒粿条', price: 8.5 },
+    m('Curry mee', '咖喱面', 9, 'curryMee', 'Yellow noodles in rich coconut curry with tofu puff.'),
+    m('Fried kuey teow', '炒粿条', 8.5, 'kueyTeow', 'Flat rice noodles fried with prawns, cockles and egg.'),
+    m('Hokkien mee', '福建面', 9, 'hokkien', 'Thick noodles braised in dark soy sauce.'),
+  ],
+  5: [
+    m('Fish porridge', '鱼片粥', 8, 'porridge', 'Smooth rice porridge with fresh fish slices and ginger.'),
+    m('Century egg pork porridge', '皮蛋瘦肉粥', 7, 'centuryEgg', 'Classic porridge with century egg and minced pork.'),
+  ],
+  6: [
+    m('Chilli pan mee (dry)', '辣椒板面', 9, 'panMeeDry', 'Hand-made noodles with fried chilli, egg and anchovies.'),
+    m('Soup pan mee', '汤板面', 8, 'panMeeSoup', 'Torn noodles in anchovy soup with sweet potato leaves.'),
+  ],
+  7: [
+    m('Wantan mee (dry)', '干捞云吞面', 8, 'wantanMee', 'Springy egg noodles with char siu and wantan.'),
+    m('Char siu wantan mee', '叉烧云吞面', 9, 'charSiu', 'Extra char siu with dumpling soup on the side.'),
   ],
   8: [
-    { name: 'Roasted chicken rice', nameZh: '烧鸡饭', price: 8 },
-    { name: 'Steamed chicken rice', nameZh: '白斩鸡饭', price: 8 },
-    { name: 'Char siu rice', nameZh: '叉烧饭', price: 9 },
+    m('Roasted chicken rice', '烧鸡饭', 8, 'roastChicken', 'Crispy-skin roast chicken on rice cooked in chicken broth, with cucumber and chilli sauce.'),
+    m('Steamed chicken rice', '白斩鸡饭', 8, 'steamChicken', 'Smooth poached chicken with soy-sesame sauce and ginger paste.'),
+    m('Char siu rice', '叉烧饭', 9, 'charSiu', 'Honey-glazed barbecued pork on fragrant rice.', { available: false }),
+  ],
+  9: [
+    m('ABC soup', '罗宋汤', 7, 'soup', 'Home-style soup with potato, carrot, tomato and pork ribs.'),
+    m('Herbal chicken soup', '药材鸡汤', 12, 'herbalSoup', 'Slow-cooked chicken with Chinese herbs and red dates.'),
+  ],
+  10: [
+    m('Mapo tofu', '麻婆豆腐', 10, 'mapoTofu', 'Soft tofu in spicy Sichuan bean sauce.'),
+    m('Sweet & sour pork', '咕咾肉', 14, 'sweetSour', 'Crispy pork with pineapple, peppers and onion.'),
   ],
 };
+
+export function sampleItems(stallNumber) {
+  return (SAMPLE[stallNumber] || []).map(({ pic, ...it }, i) => ({ ...it, photo: art(pic), createdAt: i }));
+}

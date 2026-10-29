@@ -263,7 +263,7 @@ export function createFloorPlan(container, { editable = false, onSelect = () => 
         key: `store:${s.id}`, kind: 'store', id: s.id, x: b.x, y: b.y, w: b.w, h: b.h,
         color: s.dim ? CLOSED_COLOR : s.color,
         label: [s.label, s.sublabel].filter(Boolean),
-        badge: { text: String(s.number ?? '?'), color: s.dim ? '#78716c' : '#be123c' },
+        badge: { text: String(s.number ?? '?'), color: s.dim ? '#78716c' : '#A8261B' },
       };
       objects.push(o);
       occupied.push(o);

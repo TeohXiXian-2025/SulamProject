@@ -1,12 +1,15 @@
-# Kim Seng Hawker Centre website · 金成小贩中心网站
+# 金城茶餐室 Restoran Kim Seng — website
 
-A free website for Kim Seng Hawker Centre, with three views:
+A free website for 金城茶餐室 Restoran Kim Seng, in a warm kopitiam style with big text for older users.
 
 | Page | Who | What they can do |
 |---|---|---|
 | `index.html` | Customers (no login) | See all stalls, open/closed status, menus with photos and prices, 3D floor plan with a pin, reviews per stall (Google sign-in to write) |
-| `owner.html` | Stall owners | Open/close the stall (including sudden "closed today / closed until…"), weekly hours, stall info and photo, add/edit/delete food, mark food sold out, read reviews. Mixed-rice stalls also get a price guide and an "estimated dishes" list |
-| `admin.html` | Hawker centre owner | Open/close the whole centre, add/delete stalls, create stall-owner logins, drag-and-drop 3D floor plan editor, print QR posters / table cards, manage admins |
+| `staff.html` (`/staff`) | Stall owners | One-tap "Close today", holiday / hours, menu with photos and a big Available / Sold out button, stall info, reviews. Mixed-rice stalls get a price guide and "dishes usually cooked" |
+| `staff.html` (`/staff`) | Manager | Close the whole kopitiam, stalls & owners, drag-and-drop 3D floor plan, shop name / hours / notice, QR posters and table cards, reviews, managers |
+
+The customer pages have no login button; staff use their own address. `owner.html` and
+`admin.html` still work and simply open the staff page.
 
 Interface languages: English, 中文, Bahasa Melayu. Prices in RM, times in Malaysia time.
 
@@ -28,8 +31,8 @@ python3 -m http.server 8000
 ```
 
 Then open <http://localhost:8000>. Demo logins:
-* Stall owner: `drinks@demo.com` or `rice@demo.com`, password `demo123`
-* Admin: open `admin.html`, click *Sign in with Google*, type any email, then *Yes, make me admin*
+* Stall owner: open `staff.html`, log in with `drinks@demo.com` or `rice@demo.com`, password `demo123`
+* Manager: open `staff.html`, tap *Continue with Google*, type any Gmail, then *Yes, make me the manager*
 
 ## Going live
 
@@ -39,13 +42,15 @@ Then give the owner **[docs/USER_GUIDE.md](docs/USER_GUIDE.md)**.
 ## Files
 
 ```
-index.html, owner.html, admin.html   the three pages
+index.html, staff.html               customer site, staff site
+owner.html, admin.html               old links, forward to staff.html
 css/style.css                        all styling
 js/config.js                         ← paste Firebase config here
 js/api.js                            database + login (Firebase or demo)
 js/status.js                         open/closed logic (Malaysia time)
 js/floorplan.js                      3D floor plan viewer + editor (three.js)
-js/customer.js, owner.js, admin.js   page logic
+js/customer.js, staff.js             page logic
+js/art.js                            drawn food pictures used until real photos are added
 js/forms.js, i18n.js, util.js, seed.js
 firestore.rules                      database security rules
 vendor/                              three.js, OrbitControls, qrcode-generator (MIT)

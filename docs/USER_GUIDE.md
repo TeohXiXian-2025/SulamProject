@@ -1,63 +1,68 @@
-# User guide · 使用说明
+# User guide · 使用说明 — 金城茶餐室 Restoran Kim Seng
 
-Website: `https://kimseng-hawker.web.app/`
-Stall owner login · 档主登录: `https://kimseng-hawker.web.app/owner.html`
-Admin · 管理: `https://kimseng-hawker.web.app/admin.html`
+| Who · 谁 | Address · 网址 |
+|---|---|
+| Customers · 顾客 | `https://kimseng-hawker.web.app` (the QR code) |
+| Staff · 员工 (stall owners + manager) | `https://kimseng-hawker.web.app/staff` |
+
+**Tip:** open the staff address on each stall owner's phone once, then
+*Add to Home Screen* (iPhone: Share → Add to Home Screen; Android: ⋮ → Add to Home screen).
+They get an icon called **金城 Staff** and never need to type the address.
+提示：在档主手机打开员工网址，然后「添加到主屏幕」，以后按图标就可以。
+
+Customers never see a login button. 顾客页面没有登录按钮。
 
 ---
 
-## For stall owners · 档主
+## Logging in · 登录
 
-**Log in · 登录**: open `owner.html`.
-* **Gmail**: tap **Sign in with Google · 用 Google 登录**. No password needed. 不需要密码。
-* **Other email · 其他电邮**: the first time, open the email from Firebase and **set your own password**,
-  then log in with email + password. 第一次请打开 Firebase 寄来的电邮，**自己设定密码**，然后用电邮和密码登录。
-
-### Open / close · 开档 / 休息 (*Status* tab · 营业状态)
-
-| Button · 按钮 | Meaning · 意思 |
-|---|---|
-| 🕒 Follow schedule · 按营业时间 | Normal days. Status follows the weekly hours below. 平常日子，自动按营业时间 |
-| ✅ Open now (today) · 现在营业 | Open today even outside normal hours. 今天营业（不按时间表） |
-| ⛔ Closed today · 今天休息 | Sudden closing today. Back to normal tomorrow automatically. 临时休息，明天自动恢复 |
-| 📅 Closed until… · 休息至… | Holiday for several days. Choose the last day closed. 放假几天，选择最后休息的日子 |
-
-Write a note for customers if you like (e.g. "Back on Monday"). 可写备注给顾客（例如：星期一回来）。
-
-**Weekly hours · 每周营业时间**: set open/close time for each day. Leave both empty = day off.
-每天填开档和收档时间；两个都留空 = 当天休息。
-
-### Menu · 菜单
-
-* **＋ Add food · 添加食物**: photo (take with phone camera), name, Chinese name, price.
-* **Switch · 开关** on the right: green = available, grey = **sold out** (customers see "Sold out"). 绿色 = 有，灰色 = 售完
-* **Edit · 编辑** / **Delete · 删除** each food.
-
-**Economy mixed rice stall · 经济饭档**:
-* **Price guide · 价格参考**: e.g. "1 meat + 2 veg = RM 7". Add rows, then **Save**.
-* **Dishes usually cooked · 常煮菜色**: add dishes with a type (meat / vegetable / egg…).
-  Customers are told this list is only an estimate. 网站会注明：菜色每天不同，仅供参考。
-
-### Stall info · 档口资料
-Stall photo, name, description, phone. Remember to press **Save · 保存**.
-
-### Reviews · 评价
-See what customers wrote about your stall. 查看顾客的评价。
-
-**Forgot password · 忘记密码**: on the login page type your email, tap *Forgot password?*, check your email.
+* **Gmail** → tap **Continue with Google · 用 Google 登录**. No password. 不需要密码。
+* **Other email · 其他电邮** → the first time, open the email from Firebase and **set your own password**.
+  Then type email + password and tap **Log in · 登录**.
+  Forgot it? Type your email and tap **First time, or forgot password? · 第一次 / 忘记密码**.
 
 ---
 
-## For the hawker centre manager · 小贩中心管理员
+## Stall owners · 档主
 
-Log in at `admin.html` with **Sign in with Google**. 用 Google 登录。
+The home screen shows your stall, whether it is open, and one big button:
 
-| Tab · 页面 | What to do · 做什么 |
+| Big button · 大按钮 | When · 什么时候 |
 |---|---|
-| **Stalls · 档口** | ＋ Add stall · 添加档口. **Edit**: number, name, category, mixed-rice mode, **owner login**: type the stall owner's email only. Gmail users sign in with Google; others get an email to set their own password. **Unlink** removes a stall owner. 只需输入档主电邮；移除档主按 Unlink。 **Delete** removes the stall, its menu and reviews. **Menu / Status** lets you manage a stall for its owner. |
-| **Floor Plan · 平面图** | Drag blocks to move. Select a block → Rotate / Wider / Narrower / Longer / Shorter. ＋ Tables, Entrance, Wall, Toilet, Sink, Pillar. **Save layout** when finished. Each stall has one block; its number is the stall number. 拖动方块，完成后按保存。 |
-| **Hawker centre · 小贩中心** | Open / close the **whole centre** (e.g. Chinese New Year). When the centre is closed, every stall shows closed. Opening hours, announcement banner. 整个小贩中心休息时，所有档口显示休息。 |
-| **QR codes · 二维码** | Print a **poster**, **table cards** (with table numbers) or **stall cards** (opens that stall's menu directly). 打印海报、桌卡、档口卡。 |
-| **Admins · 管理员** | Gmail addresses allowed to use this admin page. |
+| **Close today · 今天休息** | Sudden closing. Opens again tomorrow by itself. 明天自动恢复。 |
+| **Open again · 恢复营业** | You closed today but changed your mind. |
+| **Open today anyway · 今天照开** | Opening on a rest day. |
 
-**Delete a bad review · 删除不当评价**: Stalls → *Menu / Status* of that stall → *Reviews* → *Delete*.
+Below are 4 tiles · 下面有 4 个格子:
+
+* **Open / close & hours · 开档休息时间** — Closed today, Holiday (choose last day), Normal, Open anyway.
+  Set the hours for each day; tick **Rest · 休息** for days off.
+* **Menu & prices · 菜单和价格** — **Add food · 添加食物** (take a photo with the phone).
+  Each food has a big button: green **✓ Available · 有卖** → tap when finished → grey **✗ Sold out · 卖完了**.
+  *Mixed rice stall · 经济饭档:* edit the **price guide** at the top, and add "dishes usually cooked" with their type (meat / vegetable / egg…). Customers are told it is only an estimate.
+* **Stall info & photo · 档口资料和照片** — stall photo, name, description, phone.
+* **Reviews · 评价** — read what customers wrote.
+
+Every screen has a big **Back · 返回** button at the top left.
+
+---
+
+## Manager · 管理员
+
+Log in with **Google** (kimseng.hawker@gmail.com or the owner's own Gmail).
+
+The top card shows if the kopitiam is open, how many stalls are open, and a big
+**Close whole kopitiam today · 今天全店休息** button (e.g. public holiday). Then 6 tiles:
+
+| Tile · 格子 | What it does · 做什么 |
+|---|---|
+| **Stalls & owners · 档口和档主** | **Add a stall**. **Edit**: number, name, type, mixed-rice tick box, **owner's email** (Gmail → Google login; other email → they get a set-password email). **Remove owner** stops their access at once. **Delete** is inside Edit and asks twice. **Menu** lets you update a stall for its owner. "Fill empty menus with sample dishes" is for demonstrations only. |
+| **Floor plan · 平面图** | Drag blocks with your finger. Tap one → Turn / Wider / Narrower / Longer / Shorter / Remove. Add tables, entrance, toilet, wall, pillar, sink. Press **Save floor plan**. |
+| **Name, hours & notice · 名称时间公告** | Shop name (金城茶餐室 / Restoran Kim Seng), yellow notice for customers, kopitiam open/close and opening hours. |
+| **Print QR codes · 打印二维码** | Big poster, table cards (with table numbers) or stall cards (opens that stall's menu). Tap **Print**. |
+| **Reviews · 评价** | All reviews, newest first. **Remove** rude or fake ones. |
+| **Managers · 管理员** | Gmail accounts allowed to manage. The last one cannot be removed. |
+
+Changing the shop name changes the website at once and posters printed **after** that.
+Posters already printed keep working — the QR code only contains the website address.
+改店名后网站立即更新；已经打印的海报照样能扫。
