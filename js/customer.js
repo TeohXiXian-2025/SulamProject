@@ -44,17 +44,30 @@ function render(force = false) {
     const c = state.centre;
     document.title = [c.nameZh, c.name].filter(Boolean).join(' · ') || t('centreName');
     app.innerHTML = `
-      <header class="signboard ${r.page === 'home' ? '' : 'slim'}"><div class="frame">
-        <div class="zh">${esc(c.nameZh || c.name || t('centreName'))}</div>
-        ${r.page === 'home' && c.nameZh && c.name ? `<div class="en">${esc(c.name)}</div>` : ''}
-      </div></header>
-      <div class="tiles"></div>
+      <header class="kopitiam-header">
+        <div class="signboard">
+          <a class="frame" href="#/" aria-label="${esc(c.name || t('centreName'))}">
+            <div class="zh">${esc(c.nameZh || '金城茶餐室')}</div>
+            <div class="en">${esc(c.name || 'RESTORAN KIM SENG')}</div>
+          </a>
+        </div>
+        <div class="tiles" aria-hidden="true"></div>
+        <div class="customer-subbar">
+          <div class="wrap customer-subbar-inner">
+            <nav class="header-nav" aria-label="Main navigation">
+              <a href="#/" class="${r.page !== 'map' ? 'active' : ''}">${ICONS.bowl}<span>${t('navStalls')}</span></a>
+              <a href="#/map" class="${r.page === 'map' ? 'active' : ''}">${ICONS.pin}<span>${t('navMap')}</span></a>
+            </nav>
+            <div class="header-status-slot" id="header-status-slot"></div>
+            <div class="header-language">${langSwitcher()}</div>
+          </div>
+        </div>
+      </header>
       ${api.mode === 'demo' ? `<div class="banner demo">${t('demoBanner')}</div>` : ''}
-      ${r.page === 'home' ? `<div class="lang-row">${langSwitcher()}</div>` : ''}
       <main class="wrap page" id="page"></main>
-      <nav class="bottom-nav">
-        <a href="#/" class="${r.page !== 'map' ? 'active' : ''}">${ICONS.bowl}${t('navStalls')}</a>
-        <a href="#/map" class="${r.page === 'map' ? 'active' : ''}">${ICONS.pin}${t('navMap')}</a>
+      <nav class="bottom-nav" aria-label="Mobile navigation">
+        <a href="#/" class="${r.page !== 'map' ? 'active' : ''}">${ICONS.bowl}<span>${t('navStalls')}</span></a>
+        <a href="#/map" class="${r.page === 'map' ? 'active' : ''}">${ICONS.pin}<span>${t('navMap')}</span></a>
       </nav>`;
     bindLangSwitcher(app);
   }
@@ -77,18 +90,63 @@ function renderHome(force) {
   const page = $('#page');
   const cs = centreStatus(state.centre);
   if (force || !$('#stall-list')) {
-    page.innerHTML = `<div class="stack">
-      <div id="shop-status"></div>
-      ${state.centre.announcement ? `<div class="notice"><b>${t('notice')}:</b> ${esc(state.centre.announcement)}</div>` : ''}
-      <div class="grid2">
-        <button type="button" class="btn ${state.openOnly ? '' : 'on'}" data-filter="all">${t('allStalls')}</button>
-        <button type="button" class="btn ${state.openOnly ? 'on' : ''}" data-filter="open">${t('openOnly')}</button>
+    page.innerHTML = `<div class="stack discovery-page">
+      ${state.centre.announcement ? `
+        <div class="notice announcement-card">
+          <div class="notice-badge">${t('notice')}</div>
+          <div class="notice-content">${esc(state.centre.announcement)}</div>
+        </div>` : ''}
+
+      <section class="centre-hero-card">
+        <div class="centre-hero-body">
+          <div class="centre-hero-status" id="shop-status"></div>
+          <div class="centre-hero-actions">
+            <a class="btn hero-map-link" href="#/map">
+              ${ICONS.pin}<span>${t('navMap')}</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <div class="discovery-tools">
+        <div class="search-box">
+          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="search" id="q" placeholder="${esc(t('search'))}" aria-label="${esc(t('search'))}" value="${esc(state.query)}">
+          <button type="button" class="search-clear ${state.query ? '' : 'hidden'}" id="q-clear" aria-label="Clear search">✕</button>
+        </div>
+        <div class="filter-row" role="group" aria-label="${t('allStalls')}">
+          <button type="button" class="btn sm filter-btn ${state.openOnly ? '' : 'on'}" data-filter="all">
+            <span>${t('allStalls')}</span>
+          </button>
+          <button type="button" class="btn sm filter-btn ${state.openOnly ? 'on' : ''}" data-filter="open">
+            <span class="live-dot"></span><span>${t('openOnly')}</span>
+          </button>
+        </div>
       </div>
-      <input type="search" id="q" placeholder="${esc(t('search'))}" aria-label="${esc(t('search'))}" value="${esc(state.query)}">
-      <div class="section-title">${t('allStalls')}</div>
+
+      <div class="section-heading">
+        <div class="heading-title-group">
+          <h2>${t('allStalls')}</h2>
+          <span class="stall-badge-count" id="stall-count"></span>
+        </div>
+      </div>
       <div class="stall-list" id="stall-list"></div>
     </div>`;
-    $('#q').oninput = (e) => { state.query = e.target.value; renderList(); };
+    $('#q').oninput = (e) => {
+      state.query = e.target.value;
+      renderList();
+      const clearBtn = $('#q-clear');
+      if (clearBtn) clearBtn.classList.toggle('hidden', !state.query);
+    };
+    if ($('#q-clear')) {
+      $('#q-clear').onclick = () => {
+        state.query = '';
+        $('#q').value = '';
+        $('#q-clear').classList.add('hidden');
+        $('#q').focus();
+        renderList();
+      };
+    }
     page.querySelectorAll('[data-filter]').forEach((b) => {
       b.onclick = () => {
         state.openOnly = b.dataset.filter === 'open';
@@ -98,6 +156,10 @@ function renderHome(force) {
     });
   }
   $('#shop-status').innerHTML = statusBox(cs, cs.open ? t('shopOpen') : t('shopClosed'));
+  const headerStatus = $('#header-status-slot');
+  if (headerStatus) {
+    headerStatus.innerHTML = `<span class="pill ${cs.open ? 'open' : 'closed'}"><span class="live-dot"></span>${cs.open ? t('open') : t('closed')}${cs.detail ? `<span class="detail-time"> · ${cs.detail}</span>` : ''}</span>`;
+  }
   renderList();
 }
 
@@ -108,17 +170,25 @@ function renderList() {
     .map((s) => ({ s, st: storeStatus(s, state.centre, now) }))
     .filter(({ s, st }) => (!state.openOnly || st.open) && (!q
       || [s.name, s.nameZh, t(`cat_${s.category}`), String(s.number)].some((v) => String(v || '').toLowerCase().includes(q))));
+  $('#stall-count').textContent = `${rows.length} ${t('navStalls')}`;
   $('#stall-list').innerHTML = rows.map(({ s, st }) => `
-    <a class="stall-row ${st.open ? '' : 'off'}" href="#/store/${encodeURIComponent(s.id)}">
-      <span class="plate ${st.open ? '' : 'off'}">${esc(s.number ?? '')}</span>
-      ${pic(s.photo || storeArt(s))}
-      <span class="info">
-        <span class="name" style="display:block">${esc(pick(s))}</span>
-        ${pickAlt(s) ? `<span class="alt" style="display:block">${esc(pickAlt(s))}</span>` : ''}
-        ${statusPill(st)}
-      </span>
+    <a class="stall-row ${st.open ? '' : 'off'}" href="#/store/${encodeURIComponent(s.id)}" aria-label="${esc(pick(s))}">
+      <div class="stall-thumb-wrap">
+        ${pic(s.photo || storeArt(s), 'stall-thumb-img')}
+        <span class="plate ${st.open ? '' : 'off'}">${esc(s.number ?? '')}</span>
+      </div>
+      <div class="info">
+        <div class="stall-names">
+          <span class="name">${esc(pick(s))}</span>
+          ${pickAlt(s) ? `<span class="alt">${esc(pickAlt(s))}</span>` : ''}
+        </div>
+        <div class="stall-meta">
+          ${s.category ? `<span class="stall-cat-tag">${esc(t(`cat_${s.category}`) || s.category)}</span>` : ''}
+          ${statusPill(st)}
+        </div>
+      </div>
       <span class="chev">${ICONS.chev}</span>
-    </a>`).join('') || `<p class="muted">—</p>`;
+    </a>`).join('') || `<div class="empty-state"><p class="muted">${t('notFound')}</p></div>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -143,31 +213,64 @@ function renderStore() {
   const page = $('#page');
   const s = state.stores.find((x) => x.id === state.storeId);
   if (!s) {
-    page.innerHTML = `<div class="stack"><p>${t('notFound')}</p><a class="btn" href="#/">${ICONS.back}${t('backToStalls')}</a></div>`;
+    page.innerHTML = `<div class="stack store-page"><p>${t('notFound')}</p><a class="btn" href="#/">${ICONS.back}<span>${t('backToStalls')}</span></a></div>`;
     return;
   }
   const draftText = $('#rv-text')?.value;
   const st = storeStatus(s, state.centre);
-  page.innerHTML = `<div class="stack">
-    <a class="btn" href="#/">${ICONS.back}${t('backToStalls')}</a>
-    <div class="stall-head">
-      <span class="plate big">${esc(s.number ?? '')}</span>
-      <div style="min-width:0">
-        <div class="name">${esc(pick(s))}</div>
-        ${pickAlt(s) ? `<div class="alt">${esc(pickAlt(s))}</div>` : ''}
+  page.innerHTML = `<div class="stack store-page">
+    <div class="store-nav-header">
+      <a class="back-link" href="#/">${ICONS.back}<span>${t('backToStalls')}</span></a>
+    </div>
+
+    <section class="store-overview ${s.photo ? 'has-photo' : ''}">
+      ${s.photo ? `<div class="store-hero-media">${pic(s.photo, 'hero')}</div>` : ''}
+      <div class="store-overview-content">
+        <div class="stall-head">
+          <span class="plate big ${st.open ? '' : 'off'}">${esc(s.number ?? '')}</span>
+          <div class="store-hero-titles">
+            <h1 class="name">${esc(pick(s))}</h1>
+            ${pickAlt(s) ? `<div class="alt">${esc(pickAlt(s))}</div>` : ''}
+            ${s.category ? `<span class="stall-cat-tag">${esc(t(`cat_${s.category}`) || s.category)}</span>` : ''}
+          </div>
+        </div>
+
+        <div class="store-status-wrapper">
+          ${statusBox(st)}
+        </div>
+
+        ${pick(s, 'description') ? `<p class="store-desc">${esc(pick(s, 'description'))}</p>` : ''}
+
+        <div class="grid2 store-actions">
+          <a class="btn" href="#/map/${encodeURIComponent(s.id)}" style="${s.phone ? '' : 'grid-column:1/-1'}">${ICONS.pin}<span>${t('whereIsIt')}</span></a>
+          ${s.phone ? `<a class="btn" href="tel:${esc(s.phone)}">${ICONS.phone}<span>${t('callStall')}</span></a>` : ''}
+        </div>
+      </div>
+    </section>
+
+    <div class="store-quick-anchors" role="navigation" aria-label="Quick jump">
+      <a href="#store-menu" class="anchor-pill">${ICONS.bowl}<span>${t('menu')}</span></a>
+      ${hoursTable(s.hours) ? `<a href="#store-hours" class="anchor-pill">${ICONS.clock}<span>${t('openingHours')}</span></a>` : ''}
+      <a href="#store-reviews" class="anchor-pill">${ICONS.star}<span>${t('reviews')}</span></a>
+    </div>
+
+    <div class="store-content-blocks">
+      <div id="store-menu" class="store-block">
+        ${s.type === 'mixedRice' ? mixedRiceHtml(s) : menuHtml()}
+      </div>
+
+      ${hoursTable(s.hours) ? `
+      <div id="store-hours" class="store-block">
+        <details class="fold" open>
+          <summary>${ICONS.clock}<span>${t('openingHours')}</span></summary>
+          <div><table class="hours">${hoursTable(s.hours)}</table></div>
+        </details>
+      </div>` : ''}
+
+      <div id="store-reviews" class="store-block">
+        ${reviewsHtml()}
       </div>
     </div>
-    ${s.photo ? pic(s.photo, 'hero') : ''}
-    ${statusBox(st)}
-    <div class="grid2">
-      <a class="btn" href="#/map/${encodeURIComponent(s.id)}" style="${s.phone ? '' : 'grid-column:1/-1'}">${ICONS.pin}${t('whereIsIt')}</a>
-      ${s.phone ? `<a class="btn" href="tel:${esc(s.phone)}">${ICONS.phone}${t('callStall')}</a>` : ''}
-    </div>
-    ${pick(s, 'description') ? `<p style="margin:0">${esc(pick(s, 'description'))}</p>` : ''}
-    ${s.type === 'mixedRice' ? mixedRiceHtml(s) : menuHtml()}
-    ${hoursTable(s.hours) ? `<details class="fold"><summary>${t('openingHours')}</summary>
-      <div><table class="hours">${hoursTable(s.hours)}</table></div></details>` : ''}
-    ${reviewsHtml()}
   </div>`;
   if (draftText != null && $('#rv-text')) $('#rv-text').value = draftText;
   bindReviews(s);
@@ -176,20 +279,30 @@ function renderStore() {
 function dishHtml(it) {
   const sold = it.available === false;
   return `<div class="dish ${sold ? 'sold' : ''}">
-    ${pic(it.photo || art('dish'))}
-    <div class="info">
-      <div class="fname">${esc(pick(it))}</div>
-      ${pickAlt(it) ? `<div class="muted">${esc(pickAlt(it))}</div>` : ''}
-      ${it.description ? `<div class="desc">${esc(it.description)}</div>` : ''}
+    <div class="dish-media">
+      ${pic(it.photo || art('dish'))}
       ${sold ? `<span class="tag-sold">${t('soldOut')}</span>` : ''}
     </div>
-    ${it.price != null && it.price !== '' ? `<div class="price">${fmtPrice(it.price)}</div>` : ''}
+    <div class="info">
+      <div class="dish-top-line">
+        <span class="fname">${esc(pick(it))}</span>
+        ${it.price != null && it.price !== '' ? `<span class="price">${fmtPrice(it.price)}</span>` : ''}
+      </div>
+      ${pickAlt(it) ? `<div class="muted">${esc(pickAlt(it))}</div>` : ''}
+      ${it.description ? `<div class="desc">${esc(it.description)}</div>` : ''}
+    </div>
   </div>`;
 }
 
 function menuHtml() {
-  if (!state.items) return `<p class="muted">${t('loading')}</p>`;
-  if (!state.items.length) return '';
+  if (!state.items) return `<div class="loading-state"><p class="muted">${t('loading')}</p></div>`;
+  if (!state.items.length) {
+    return `<div class="empty-state card" style="text-align:center;padding:36px 16px;background:var(--marble);border-radius:var(--radius);border:1px solid var(--line);">
+      <div style="font-size:2.2rem;margin-bottom:8px">🍜</div>
+      <p style="margin:0 0 6px;font-weight:700;font-size:1.05rem;color:var(--ink)">${t('noFoodYet')}</p>
+      <p class="small muted" style="margin:0">${t('noFoodSub')}</p>
+    </div>`;
+  }
   const groups = new Map();
   for (const it of state.items) {
     const k = pick(it, 'section');
@@ -197,26 +310,54 @@ function menuHtml() {
     groups.get(k).push(it);
   }
   return `<div class="section-title">${t('menu')}</div>` + [...groups].map(([sec, items]) =>
-    `<div class="board">${sec ? `<h3>${esc(sec)}</h3>` : ''}${items.map(dishHtml).join('')}</div>`).join('');
+    `<div class="board">
+      ${sec ? `<div class="board-header"><h3>${esc(sec)}</h3><span class="badge-count">${items.length}</span></div>` : ''}
+      <div class="board-dishes">${items.map(dishHtml).join('')}</div>
+    </div>`).join('');
 }
 
 function mixedRiceHtml(s) {
   const prices = s.mixedRice?.prices || [];
   const items = state.items || [];
+  if (!prices.length && !items.length) {
+    return `<div class="empty-state card" style="text-align:center;padding:36px 16px;background:var(--marble);border-radius:var(--radius);border:1px solid var(--line);">
+      <div style="font-size:2.2rem;margin-bottom:8px">🍛</div>
+      <p style="margin:0 0 6px;font-weight:700;font-size:1.05rem;color:var(--ink)">${t('noFoodYet')}</p>
+      <p class="small muted" style="margin:0">${t('noFoodSub')}</p>
+    </div>`;
+  }
   return `
-    ${prices.length ? `<div class="board red"><h3>${t('priceGuide')}</h3>
-      ${prices.map((p) => `<div class="guide-row"><span>${esc(pick(p, 'label'))}${pickAlt(p, 'label') ? ` <span class="muted">${esc(pickAlt(p, 'label'))}</span>` : ''}</span>
-        <span class="price">${fmtPrice(p.price)}</span></div>`).join('')}</div>` : ''}
-    ${s.mixedRice?.note ? `<p class="muted" style="margin:0">${esc(s.mixedRice.note)}</p>` : ''}
+    ${prices.length ? `<div class="board red">
+      <div class="board-header"><h3>${t('priceGuide')}</h3></div>
+      <div class="guide-list">
+        ${prices.map((p) => `<div class="guide-row">
+          <span>${esc(pick(p, 'label'))}${pickAlt(p, 'label') ? ` <span class="muted">${esc(pickAlt(p, 'label'))}</span>` : ''}</span>
+          <span class="price">${fmtPrice(p.price)}</span>
+        </div>`).join('')}
+      </div>
+    </div>` : ''}
+    ${s.mixedRice?.note ? `<p class="muted mixed-note">${esc(s.mixedRice.note)}</p>` : ''}
     <div class="section-title">${t('dishesUsually')}</div>
-    <div class="notice">${t('mixedRiceNote')}</div>
-    ${KINDS.map((k) => {
-      const list = items.filter((it) => (it.kind || 'other') === k);
-      return list.length ? `<div class="board"><h3>${t(`kind_${k}`)}</h3><div class="dish-grid">${list.map((it) => `
-        <div class="dish-card ${it.available === false ? 'sold' : ''}">${pic(it.photo || art('dish'))}
-          <b>${esc(pick(it))}${pickAlt(it) ? `<br><span class="alt">${esc(pickAlt(it))}</span>` : ''}</b>
-          ${it.available === false ? `<span class="tag-sold">${t('soldOut')}</span>` : ''}</div>`).join('')}</div></div>` : '';
-    }).join('')}`;
+    <div class="notice mixed-rice-notice">${t('mixedRiceNote')}</div>
+    <div class="mixed-rice-sections">
+      ${KINDS.map((k) => {
+        const list = items.filter((it) => (it.kind || 'other') === k);
+        return list.length ? `<div class="board">
+          <div class="board-header"><h3>${t(`kind_${k}`)}</h3><span class="badge-count">${list.length}</span></div>
+          <div class="dish-grid">${list.map((it) => `
+            <div class="dish-card ${it.available === false ? 'sold' : ''}">
+              <div class="dish-card-media">
+                ${pic(it.photo || art('dish'))}
+                ${it.available === false ? `<span class="tag-sold">${t('soldOut')}</span>` : ''}
+              </div>
+              <div class="dish-card-caption">
+                <b>${esc(pick(it))}</b>
+                ${pickAlt(it) ? `<span class="alt">${esc(pickAlt(it))}</span>` : ''}
+              </div>
+            </div>`).join('')}</div>
+        </div>` : '';
+      }).join('')}
+    </div>`;
 }
 
 function reviewsHtml() {
@@ -225,27 +366,36 @@ function reviewsHtml() {
   const mine = state.user && reviews.find((r) => r.id === state.user.uid);
   const rating = state.draftRating || mine?.rating || 0;
   const form = state.user
-    ? `<div class="card stack">
+    ? `<div class="card stack review-form-card">
         <b>${mine ? t('yourReview') : t('writeReview')}</b>
         <div class="star-input" role="group" aria-label="Rating">${[1, 2, 3, 4, 5].map((n) =>
           `<button type="button" data-star="${n}" class="${n <= rating ? 'on' : ''}" aria-label="${n}">★</button>`).join('')}</div>
-        <textarea id="rv-text" maxlength="500">${esc(mine?.text || '')}</textarea>
+        <textarea id="rv-text" maxlength="500" placeholder="Write your review here...">${esc(mine?.text || '')}</textarea>
         <button type="button" class="btn red" id="rv-save">${t('submit')}</button>
         <div class="grid2">
           ${mine ? `<button type="button" class="btn sm danger" id="rv-del">${t('deleteMyReview')}</button>` : '<span></span>'}
           <button type="button" class="btn sm" id="rv-out">${t('signOut')}</button>
         </div>
       </div>`
-    : `<button type="button" class="btn red block" id="rv-in">${t('writeReview')}</button>`;
+    : `<div class="review-signin-card"><button type="button" class="btn red block" id="rv-in">${t('writeReview')}</button></div>`;
   return `<div class="section-title">${t('reviews')}</div>
-    <div class="card stack">
-      ${reviews.length ? `<div class="row"><span class="rating">${avg.toFixed(1)}</span>
-        <span><span class="stars">${stars(avg)}</span><br><span class="small muted">${t('reviewsCount', { n: reviews.length })}</span></span></div>` : ''}
+    <div class="card stack reviews-card">
+      ${reviews.length ? `<div class="row reviews-score-summary">
+        <span class="rating">${avg.toFixed(1)}</span>
+        <div><span class="stars">${stars(avg)}</span><div class="small muted">${t('reviewsCount', { n: reviews.length })}</div></div>
+      </div>` : ''}
       ${form}
-      ${reviews.length ? reviews.map((r) => `<div class="review">
-        <div class="row"><b>${esc(r.name || '—')}</b><span class="stars">${stars(r.rating)}</span>
-          <span class="spacer"></span><span class="small muted">${new Date(r.createdAt).toLocaleDateString()}</span></div>
-        ${r.text ? `<div>${esc(r.text)}</div>` : ''}</div>`).join('') : `<p class="muted" style="margin:0">${t('noReviews')}</p>`}
+      <div class="reviews-list">
+        ${reviews.length ? reviews.map((r) => `<div class="review">
+          <div class="row review-header">
+            <b>${esc(r.name || '—')}</b>
+            <span class="stars">${stars(r.rating)}</span>
+            <span class="spacer"></span>
+            <span class="small muted">${new Date(r.createdAt).toLocaleDateString()}</span>
+          </div>
+          ${r.text ? `<div class="review-text">${esc(r.text)}</div>` : ''}
+        </div>`).join('') : `<p class="muted" style="margin:10px 0 0">${t('noReviews')}</p>`}
+      </div>
     </div>`;
 }
 
@@ -299,11 +449,15 @@ async function renderMap(selectedId) {
     if (planLoading) return;
     disposePlan();
     planLoading = true;
-    page.innerHTML = `<div class="stack">
-      <div class="section-title">${t('whereTitle')}</div>
-      <div class="legend"><span><i style="background:#2B6B4E"></i>${t('legendOpen')}</span>
-        <span><i style="background:#A8A29E"></i>${t('legendClosed')}</span>
-        <span><i style="background:#B08968"></i>${t('legendTables')}</span></div>
+    page.innerHTML = `<div class="stack map-page-layout">
+      <div class="map-page-top">
+        <h2 class="section-title" style="margin-top:0">${t('whereTitle')}</h2>
+        <div class="legend">
+          <span class="legend-item"><i style="background:#1b5e4a"></i>${t('legendOpen')}</span>
+          <span class="legend-item"><i style="background:#a8a29e"></i>${t('legendClosed')}</span>
+          <span class="legend-item"><i style="background:#cfc9bf"></i>${t('legendTables')}</span>
+        </div>
+      </div>
       <div class="fp-wrap" id="fp"><div class="fp-hint" id="fp-hint">${t('tapStall')}</div></div>
       <div id="map-card"></div>
     </div>`;
@@ -332,7 +486,7 @@ async function renderMap(selectedId) {
     extras: state.centre.floor?.extras || [],
     stores: state.stores.map((s) => ({
       id: s.id, number: s.number, block: s.block, label: pick(s), sublabel: pickAlt(s),
-      color: '#2B6B4E', dim: !storeStatus(s, state.centre, now).open,
+      color: '#1b5e4a', dim: !storeStatus(s, state.centre, now).open,
     })),
   });
   if (selectedId) plan.select(`store:${selectedId}`);
@@ -347,9 +501,11 @@ function showMapCard(id) {
   if (!s) { box.innerHTML = ''; return; }
   const st = storeStatus(s, state.centre);
   box.innerHTML = `<div class="card map-card">
-    <span class="plate">${esc(s.number ?? '')}</span>
-    <div style="flex:1;min-width:0"><b style="font-size:1.1rem">${esc(pick(s))}</b>
-      ${pickAlt(s) ? `<span class="muted"> ${esc(pickAlt(s))}</span>` : ''}<div>${statusPill(st)}</div></div>
+    <span class="plate ${st.open ? '' : 'off'}">${esc(s.number ?? '')}</span>
+    <div style="flex:1;min-width:0">
+      <div class="map-card-name"><b>${esc(pick(s))}</b>${pickAlt(s) ? `<span class="muted"> ${esc(pickAlt(s))}</span>` : ''}</div>
+      <div>${statusPill(st)}</div>
+    </div>
     <a class="btn red" href="#/store/${encodeURIComponent(s.id)}">${t('menu')}</a>
   </div>`;
 }

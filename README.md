@@ -43,16 +43,15 @@ Interface languages: English, 中文, Bahasa Melayu. Prices in RM, times in Mala
 
 ## Try it now (demo mode)
 
-While `js/config.js` has `firebaseConfig = null`, the site runs in **demo mode**:
-everything works, but data is saved only in your own browser.
+For a local preview, use **demo mode**. It keeps data in your browser and does not contact the live Firebase project.
 
 ```bash
-python3 -m http.server 8000
+node serve.cjs
 ```
 
-Then open <http://localhost:8000>. Demo logins:
-* Stall owner: open `staff.html`, log in with `drinks@demo.com` or `rice@demo.com`, password `demo123`
-* Manager: open `staff.html`, tap *Continue with Google*, type any Gmail, then *Yes, make me the manager*
+Then open [customer preview](http://127.0.0.1:8000/?demo=1) or [staff preview](http://127.0.0.1:8000/staff.html?demo=1). Demo logins:
+* Stall owner / Manager: enter any email and password in demo mode to sign in or register instantly.
+* Manager: tap *Continue with Google*, type any Gmail, then *Yes, make me the manager*.
 
 ## Going live
 

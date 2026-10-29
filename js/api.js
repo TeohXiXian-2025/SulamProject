@@ -5,14 +5,17 @@
 //   - Demo mode (no config): same functions, data kept in this browser's
 //     localStorage, so the site can be tried without any setup.
 import { firebaseConfig } from './config.js';
-import { DEFAULT_CENTRE, STARTER_STORES, sampleItems } from './seed.js';
+import { DEFAULT_CENTRE, STARTER_STORES } from './seed.js';
 import { uid, sortStores, sortItems } from './util.js';
 
 const FIREBASE_VERSION = '10.12.2';
 
 let apiPromise;
 export function getApi() {
-  apiPromise ??= firebaseConfig ? firebaseApi(firebaseConfig) : Promise.resolve(demoApi());
+  // A local preview can use seeded browser data without contacting the live Firebase project.
+  const localDemo = ['localhost', '127.0.0.1'].includes(location.hostname)
+    && new URLSearchParams(location.search).get('demo') === '1';
+  apiPromise ??= firebaseConfig && !localDemo ? firebaseApi(firebaseConfig) : Promise.resolve(demoApi());
   return apiPromise;
 }
 
@@ -68,102 +71,72 @@ async function firebaseApi(config) {
     mode: 'firebase',
 
     onAuth: (cb) => A.onAuthStateChanged(auth, (u) => cb(mapUser(u))),
-    async signInGoogle() {
-      const p = new A.GoogleAuthProvider();
-      p.setCustomParameters({ prompt: 'select_account' });
-      try {
-        await A.signInWithPopup(auth, p);
-      } catch (e) {
-        if (e.code === 'auth/popup-blocked') await A.signInWithRedirect(auth, p);
-        else if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') throw e;
-      }
-    },
-    signInEmail: (email, pw) => A.signInWithEmailAndPassword(auth, email.trim(), pw),
+    signInGoogle: () => A.signInWithPopup(auth, new A.GoogleAuthProvider()),
+    signInEmail: (email, pw) => A.signInWithEmailAndPassword(auth, email, pw),
     signOut: () => A.signOut(auth),
-    resetPassword: (email) => A.sendPasswordResetEmail(auth, email.trim()),
+    resetPassword: (email) => A.sendPasswordResetEmail(auth, email),
     changePassword: (pw) => A.updatePassword(auth.currentUser, pw),
     sendVerification: () => A.sendEmailVerification(auth.currentUser),
-    async refreshUser() {
+    refreshUser: async () => {
       await auth.currentUser?.reload();
-      await auth.currentUser?.getIdToken(true);
       return mapUser(auth.currentUser);
     },
-
-    // Creates a login for a non-Gmail stall owner and emails them a link to
-    // choose their own password. Uses a temporary second Firebase app so the
-    // admin stays signed in. Returns the new account id, or null if the email
-    // already had a login (a set-password email is still sent).
+    // Creates an auth account for a stall owner with a temporary random password,
+    // then emails them a password-reset link so they choose their own password.
     async createOwnerAccount(email) {
-      const tmp = appMod.initializeApp(config, `tmp-${Date.now()}`);
-      let uidOut = null;
-      try {
-        const tmpAuth = A.initializeAuth(tmp, { persistence: A.inMemoryPersistence });
-        const cred = await A.createUserWithEmailAndPassword(tmpAuth, email.trim(), randomPassword());
-        uidOut = cred.user.uid;
-        await A.signOut(tmpAuth);
-      } catch (e) {
-        if (e.code !== 'auth/email-already-in-use') throw e;
-      } finally {
-        await appMod.deleteApp(tmp).catch(() => {});
-      }
-      await A.sendPasswordResetEmail(auth, email.trim());
-      return uidOut;
+      const cred = await A.createUserWithEmailAndPassword(auth, email, randomPassword());
+      await A.sendPasswordResetEmail(auth, email);
+      return cred.user.uid;
     },
 
-    watchCentre: (cb) => F.onSnapshot(centreRef, (s) => cb(fixOldName(s.exists() ? { ...DEFAULT_CENTRE, ...s.data() } : clean(DEFAULT_CENTRE))), onErr),
+    watchCentre: (cb) => F.onSnapshot(centreRef, (snap) => cb(fixOldName(snap.data() || DEFAULT_CENTRE)), onErr),
     updateCentre: (patch) => F.setDoc(centreRef, clean(patch), { merge: true }),
-    async getAdmins() {
-      const s = await F.getDoc(adminsRef);
-      return s.exists() ? s.data().emails || [] : null;
-    },
+    getAdmins: async () => (await F.getDoc(adminsRef)).data()?.emails || null,
     claimAdmin: (email) => F.setDoc(adminsRef, { emails: [lower(email)] }),
     setAdmins: (emails) => F.setDoc(adminsRef, { emails: emails.map(lower) }),
 
-    watchStores: (cb) => F.onSnapshot(storesCol, (s) => cb(sortStores(s.docs.map(withId))), onErr),
-    watchStore: (id, cb) => F.onSnapshot(F.doc(db, 'stores', id), (s) => cb(s.exists() ? withId(s) : null), onErr),
-    // Stalls linked to this login by account id, or by a verified email
-    // (e.g. a stall owner who signs in with their Gmail).
-    watchOwnedStores(user, cb) {
-      const found = { uid: null, email: null };
+    watchStores: (cb) => F.onSnapshot(storesCol, (snap) => cb(sortStores(snap.docs.map(withId))), onErr),
+    watchStore: (id, cb) => F.onSnapshot(F.doc(db, 'stores', id), (snap) => cb(snap.exists() ? withId(snap) : null), onErr),
+    watchOwnedStores: (u, cb) => {
+      let byUid = [];
+      let byEmail = [];
       const emit = () => {
-        if (found.uid === null || found.email === null) return;
-        const all = new Map([...found.uid, ...found.email].map((s) => [s.id, s]));
-        cb(sortStores([...all.values()]));
+        const seen = new Set();
+        const merged = [...byUid, ...byEmail].filter((s) => !seen.has(s.id) && seen.add(s.id));
+        cb(sortStores(merged));
       };
-      const unsubs = [
-        F.onSnapshot(F.query(storesCol, F.where('ownerUid', '==', user.uid)), (s) => { found.uid = s.docs.map(withId); emit(); }, onErr),
-      ];
-      if (user.email && user.verified) {
-        unsubs.push(F.onSnapshot(F.query(storesCol, F.where('ownerEmail', '==', user.email)), (s) => { found.email = s.docs.map(withId); emit(); }, onErr));
-      } else {
-        found.email = [];
-      }
-      return () => unsubs.forEach((u) => u());
+      const un1 = F.onSnapshot(F.query(storesCol, F.where('ownerUid', '==', u.uid)), (snap) => {
+        byUid = snap.docs.map(withId); emit();
+      }, onErr);
+      const un2 = u.verified && u.email ? F.onSnapshot(F.query(storesCol, F.where('ownerEmail', '==', u.email)), (snap) => {
+        byEmail = snap.docs.map(withId); emit();
+      }, onErr) : () => {};
+      return () => { un1(); un2(); };
     },
     createStore: async (data) => (await F.addDoc(storesCol, clean(data))).id,
     updateStore: (id, patch) => F.updateDoc(F.doc(db, 'stores', id), clean(patch)),
-    async updateStores(patches) {
+    updateStores: (patches) => {
       const batch = F.writeBatch(db);
       for (const [id, patch] of Object.entries(patches)) batch.update(F.doc(db, 'stores', id), clean(patch));
-      await batch.commit();
+      return batch.commit();
     },
-    async deleteStore(id) {
-      for (const sub of ['items', 'reviews']) {
-        const snap = await F.getDocs(F.collection(db, 'stores', id, sub));
-        await Promise.all(snap.docs.map((d) => F.deleteDoc(d.ref)));
-      }
-      await F.deleteDoc(F.doc(db, 'stores', id));
-    },
+    deleteStore: (id) => F.deleteDoc(F.doc(db, 'stores', id)),
 
     watchItems: (storeId, cb) => F.onSnapshot(F.collection(db, 'stores', storeId, 'items'),
-      (s) => cb(sortItems(s.docs.map(withId))), onErr),
-    addItem: (storeId, data) => F.addDoc(F.collection(db, 'stores', storeId, 'items'), clean({ ...data, createdAt: Date.now() })),
+      (snap) => cb(sortItems(snap.docs.map(withId))), onErr),
+    addItem: (storeId, data) => F.addDoc(F.collection(db, 'stores', storeId, 'items'), {
+      ...clean(data), createdAt: F.serverTimestamp(),
+    }),
     updateItem: (storeId, itemId, patch) => F.updateDoc(F.doc(db, 'stores', storeId, 'items', itemId), clean(patch)),
     deleteItem: (storeId, itemId) => F.deleteDoc(F.doc(db, 'stores', storeId, 'items', itemId)),
 
-    watchReviews: (storeId, cb) => F.onSnapshot(F.collection(db, 'stores', storeId, 'reviews'),
-      (s) => cb(s.docs.map((d) => ({ ...withId(d), createdAt: millis(d.data().createdAt) }))
-        .sort((a, b) => b.createdAt - a.createdAt)), onErr),
+    watchReviews: (storeId, cb) => F.onSnapshot(
+      F.query(F.collection(db, 'stores', storeId, 'reviews'), F.orderBy('createdAt', 'desc')),
+      (snap) => cb(snap.docs.map((d) => ({
+        id: d.id, ...d.data(), createdAt: millis(d.data().createdAt),
+      }))),
+      onErr,
+    ),
     saveReview: (storeId, user, { rating, text }) => F.setDoc(F.doc(db, 'stores', storeId, 'reviews', user.uid), {
       rating, text, name: (user.name || 'Customer').slice(0, 60), createdAt: F.serverTimestamp(),
     }),
@@ -175,7 +148,7 @@ async function firebaseApi(config) {
 // Demo (browser only)
 // ---------------------------------------------------------------------------
 function demoApi() {
-  const KEY = 'kimseng-demo-v2';
+  const KEY = 'kimseng-demo-pure-v5';
   const USER_KEY = 'kimseng-demo-user';
   const listeners = new Set();
   const authListeners = new Set();
@@ -191,20 +164,12 @@ function demoApi() {
     const data = { centre: clean(DEFAULT_CENTRE), admins: null, stores: {}, items: {}, reviews: {}, accounts: {} };
     for (const s of STARTER_STORES) {
       const id = `s${s.number}`;
-      data.stores[id] = clean(s);
+      const stall = clean(s);
+      stall.ownerUid = '';
+      stall.ownerEmail = '';
+      data.stores[id] = stall;
       data.items[id] = {};
-      sampleItems(s.number).forEach((it, i) => {
-        data.items[id][`i${s.number}_${i}`] = it;
-      });
     }
-    // Two demo stall-owner logins.
-    data.accounts['drinks@demo.com'] = { password: 'demo123', uid: 'owner-drinks' };
-    data.accounts['rice@demo.com'] = { password: 'demo123', uid: 'owner-rice' };
-    data.stores.s1.ownerUid = 'owner-drinks';
-    data.stores.s1.ownerEmail = 'drinks@demo.com';
-    data.stores.s2.ownerUid = 'owner-rice';
-    data.stores.s2.ownerEmail = 'rice@demo.com';
-    data.reviews.s8 = { demo1: { rating: 5, text: 'Chicken is very smooth!', name: 'Ali', createdAt: Date.now() - 86400000 } };
     return data;
   }
   function persist() {
@@ -248,14 +213,30 @@ function demoApi() {
       return () => authListeners.delete(cb);
     },
     async signInGoogle() {
-      const email = window.prompt('Demo mode: type any Gmail address to pretend to sign in with Google', 'demo.user@gmail.com');
+      const email = window.prompt('Demo mode: enter any Gmail address to sign in with Google:');
       if (!email) return;
-      setUser({ uid: `g-${lower(email)}`, email: lower(email), name: email.split('@')[0], provider: 'google.com', verified: true });
+      const cleanEmail = lower(email.trim());
+      let acc = db.accounts[cleanEmail];
+      if (!acc) {
+        acc = { password: '', uid: `g-${cleanEmail}`, verified: true };
+        db.accounts[cleanEmail] = acc;
+        persist();
+      }
+      setUser({ uid: acc.uid, email: cleanEmail, name: cleanEmail.split('@')[0], provider: 'google.com', verified: true });
     },
     async signInEmail(email, pw) {
-      const acc = db.accounts[lower(email)];
-      if (!acc || acc.password !== pw) throw fail('auth/invalid-credential', 'Wrong email or password');
-      setUser({ uid: acc.uid, email: lower(email), name: '', provider: 'password', verified: !!acc.verified });
+      const cleanEmail = lower(email?.trim());
+      if (!cleanEmail || !pw) throw fail('auth/invalid-credential', 'Please enter email and password');
+      let acc = db.accounts[cleanEmail];
+      if (!acc) {
+        // Self-registration in demo mode: auto-create account for entered credentials
+        acc = { password: pw, uid: `u-${uid()}`, verified: true };
+        db.accounts[cleanEmail] = acc;
+        persist();
+      } else if (acc.password !== pw) {
+        throw fail('auth/invalid-credential', 'Wrong email or password');
+      }
+      setUser({ uid: acc.uid, email: cleanEmail, name: '', provider: 'password', verified: !!acc.verified });
     },
     async signOut() { setUser(null); },
     async resetPassword() { /* nothing to send in demo mode */ },
@@ -272,13 +253,13 @@ function demoApi() {
       if (acc) setUser({ ...user, verified: !!acc.verified });
       return user;
     },
-    // Demo mode cannot send email, so the "chosen" password is demo123.
     async createOwnerAccount(email) {
       mustAdmin();
-      const acc = db.accounts[lower(email)];
+      const cleanEmail = lower(email?.trim());
+      const acc = db.accounts[cleanEmail];
       if (acc) return null;
       const id = `u-${uid()}`;
-      db.accounts[lower(email)] = { password: 'demo123', uid: id };
+      db.accounts[cleanEmail] = { password: 'password123', uid: id, verified: true };
       persist();
       return id;
     },

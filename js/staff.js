@@ -7,7 +7,7 @@ import { t, pick, pickAlt, langSwitcher, bindLangSwitcher } from './i18n.js';
 import { centreStatus, storeStatus, statusBox, nowLocal, overrideActive, todayStr } from './status.js';
 import { $, esc, toast, stars, pic, ICONS, bigIcon, CATEGORIES, categoryColor, fmtPrice } from './util.js';
 import { art, storeArt } from './art.js';
-import { STARTER_STORES, DEFAULT_CENTRE, sampleItems } from './seed.js';
+import { DEFAULT_CENTRE } from './seed.js';
 import {
   saving, statusChoicesHtml, bindStatusChoices, hoursEditorHtml, bindHoursEditor,
   photoPickerHtml, bindPhotoPicker, openItemDialog, itemCardHtml,
@@ -121,19 +121,55 @@ function render(force = false) {
   return renderHome();
 }
 
-// Top bar + tile strip + page body. `back` is a hash to return to, or null on the home screen.
+function staffNav() {
+  if (!S.user || !S.owned) return '';
+  const current = location.hash || '#/';
+  const links = [{ href: '#/', label: t('dashboard'), icon: ICONS.shop }];
+  for (const s of S.owned) links.push({ href: `#/stall/${encodeURIComponent(s.id)}`, label: `${s.number} · ${pick(s)}`, icon: ICONS.bowl });
+  if (isAdmin()) links.push(
+    { href: '#/stalls', label: t('tileStalls'), icon: ICONS.people },
+    { href: '#/floor', label: t('tileFloor'), icon: ICONS.map },
+    { href: '#/centre', label: t('tileCentre'), icon: ICONS.clock },
+    { href: '#/qr', label: t('tileQR'), icon: ICONS.print },
+    { href: '#/reviews', label: t('tileMgrReviews'), icon: ICONS.star },
+    { href: '#/admins', label: t('tileAdmins'), icon: ICONS.people },
+  );
+  if (S.user.provider === 'password') links.push({ href: '#/account', label: t('changePassword'), icon: ICONS.pencil });
+  return `<nav class="staff-nav" aria-label="${t('dashboard')}">${links.map(({ href, label, icon }) =>
+    `<a href="${href}" class="${current === href || (href.startsWith('#/stall/') && current.startsWith(href + '/')) ? 'active' : ''}">${icon}<span>${esc(label)}</span></a>`).join('')}</nav>`;
+}
+
+// Top bar + navigation + page body. `back` is a hash to return to, or null on the home screen.
 function shell(back, body, title) {
   const c = S.centre || DEFAULT_CENTRE;
   app.innerHTML = `
-    <header class="topbar"><div class="wrap">
-      ${back ? `<a class="btn" href="${back}">${ICONS.back}${t('back')}</a>` : ''}
-      <div class="title">${esc(title || c.nameZh || c.name || t('centreName'))}
-        ${!back && S.user ? `<span class="who">${esc(S.user.email)}</span>` : ''}</div>
-      ${!back && S.user ? `<button type="button" class="btn" id="logout">${t('logOut')}</button>` : ''}
-    </div></header>
-    <div class="tiles"></div>
+    <header class="kopitiam-header staff-header">
+      <div class="signboard">
+        <a class="frame" href="#/" aria-label="${esc(c.name || t('centreName'))}">
+          <div class="zh">${esc(c.nameZh || '金城茶餐室')}</div>
+          <div class="en">${esc(c.name || 'RESTORAN KIM SENG')}</div>
+        </a>
+      </div>
+      <div class="tiles" aria-hidden="true"></div>
+      <div class="staff-subbar">
+        <div class="wrap staff-subbar-inner">
+          <div class="staff-subbar-meta">
+            <span class="staff-role-badge">${isAdmin() ? t('manager') : t('stallOwner')}</span>
+            <span class="staff-page-title">${esc(title || t('dashboard'))}</span>
+            ${S.user ? `<span class="staff-user-email">${esc(S.user.email)}</span>` : ''}
+          </div>
+          <div class="staff-subbar-actions">
+            <div class="header-language">${langSwitcher()}</div>
+            ${!back && S.user ? `<button type="button" class="btn sm" id="logout">${t('logOut')}</button>` : ''}
+          </div>
+        </div>
+      </div>
+    </header>
     ${api.mode === 'demo' ? `<div class="banner demo">${t('demoBanner')}</div>` : ''}
-    <main class="wrap" style="padding-block:16px 40px"><div class="stack" id="body">${body}</div></main>`;
+    <div class="staff-layout wrap">${staffNav()}<main class="staff-main">
+      ${back ? `<a class="back-link" href="${back}">${ICONS.back}<span>${t('back')}</span></a>` : ''}
+      <div class="stack" id="body">${body}</div>
+    </main></div>`;
   $('#logout')?.addEventListener('click', () => api.signOut());
   bindLangSwitcher(app);
   return $('#body');
@@ -145,32 +181,42 @@ function shell(back, body, title) {
 function renderLogin() {
   const c = S.centre || DEFAULT_CENTRE;
   app.innerHTML = `
-    <header class="signboard"><div class="frame">
-      <div class="zh">${t('staffLogin')}</div>
-      <div class="en">${esc(c.nameZh || '')} · ${esc(c.name || '')}</div>
-    </div></header>
-    <div class="tiles"></div>
-    ${api.mode === 'demo' ? `<div class="banner demo">${t('demoBanner')} drinks@demo.com / rice@demo.com · demo123</div>` : ''}
-    <main class="wrap stack" style="padding-block:16px 40px">
-      <div class="lang-row" style="padding:0">${langSwitcher()}</div>
+    <header class="kopitiam-header staff-header">
+      <div class="signboard">
+        <a class="frame" href="./" aria-label="${esc(c.name || t('centreName'))}">
+          <div class="zh">${esc(c.nameZh || '金城茶餐室')}</div>
+          <div class="en">${esc(c.name || 'RESTORAN KIM SENG')}</div>
+        </a>
+      </div>
+      <div class="tiles" aria-hidden="true"></div>
+    </header>
+    ${api.mode === 'demo' ? `<div class="banner demo">${t('demoBanner')}</div>` : ''}
+    <main class="wrap stack login-main">
+      <div class="login-intro">
+        <span class="eyebrow">${esc(c.name || t('centreName'))}</span>
+        <h1>${t('staffLogin')}</h1>
+        <p>${t('staffWho')}</p>
+      </div>
+      <!-- lang switcher in sticky subbar -->
       <div class="card stack login-box">
-        <div class="muted">${t('staffWho')}</div>
-        <button type="button" class="btn big block" id="google" style="background:#fff">
+        <button type="button" class="btn big block google-btn" id="google" style="background:#fff">
           <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z" fill="#4285F4"/><path d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z" fill="#34A853"/><path d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1a10 10 0 0 0 0 9.2z" fill="#FBBC05"/><path d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.4L6.4 10c.8-2.3 3-4.1 5.6-4.1z" fill="#EA4335"/></svg>
-          ${t('continueGoogle')}</button>
+          <span>${t('continueGoogle')}</span></button>
         <div class="muted center" style="text-align:center;margin-top:-6px">${t('haveGmail')}</div>
+        
         <div class="or">${t('noGmail')}</div>
         <form id="login" class="stack">
           <label class="field"><span>${t('email')}</span><input type="email" name="email" required autocomplete="username"></label>
           <label class="field"><span>${t('password')}</span><input type="password" name="password" required autocomplete="current-password"></label>
           <button type="submit" class="btn red big block">${t('logIn')}</button>
         </form>
-        <button type="button" class="btn sm" id="forgot" style="border:0;background:none;color:var(--red)">${t('firstTime')}</button>
+        <button type="button" class="btn sm" id="forgot" style="border:0;background:none;color:var(--red);cursor:pointer">${t('firstTime')}</button>
       </div>
-      <a href="./" class="muted" style="text-align:center">← ${t('backToSite')}</a>
+      <a href="./" class="muted back-to-site" style="text-align:center">← ${t('backToSite')}</a>
     </main>`;
   bindLangSwitcher(app);
   $('#google').onclick = () => api.signInGoogle().catch((e) => toast(errorText(e), 'error'));
+  
   $('#login').onsubmit = (e) => {
     e.preventDefault();
     api.signInEmail(e.target.email.value, e.target.password.value).catch((err) => toast(errorText(err), 'error'));
@@ -256,7 +302,7 @@ function stallTiles(s) {
       ${tile(`#/stall/${id}/info`, ICONS.pencil, t('tileInfo'), t('tileInfoSub'))}
       ${tile(`#/stall/${id}/reviews`, ICONS.star, t('tileReviews'), reviewSummary(s.id))}
     </div>
-    <a class="btn" href="./#/store/${id}" target="_blank" rel="noopener">${t('seeAsCustomer')}</a>`;
+    <a class="btn" href="./${location.search}#/store/${id}" target="_blank" rel="noopener">${t('seeAsCustomer')}</a>`;
 }
 
 function reviewSummary(id) {
@@ -303,8 +349,7 @@ function managerCard() {
 function renderHome() {
   const owned = S.owned || [];
   const body = shell(null, `
-    <div class="lang-row" style="padding:0">${langSwitcher()}</div>
-    ${owned.map((s) => stallCard(s) + stallTiles(s)).join('<div style="height:10px"></div>')}
+        ${owned.map((s) => stallCard(s) + stallTiles(s)).join('<div style="height:10px"></div>')}
     ${isAdmin() ? `${owned.length ? '<div class="section-title">' + t('manager') + '</div>' : ''}${managerCard()}` : ''}
     ${S.user.provider === 'password' ? `<a class="btn sm" href="#/account">${t('changePassword')}</a>` : ''}`);
   bindQuick(body);
@@ -344,7 +389,11 @@ function renderStallMenu(s) {
     ${mixed ? priceGuideHtml(s) + `<div class="section-title">${t('dishesUsually')}</div><div class="notice">${t('mixedRiceNote')}</div>` : ''}
     <button type="button" class="btn red big" id="add-item">${ICONS.plus}${t('addFood')}</button>
     <div class="help">${t('soldOutHint')}</div>
-    ${items ? items.map(itemCardHtml).join('') : `<p class="muted">${t('loading')}</p>`}
+    ${items ? (items.length ? items.map(itemCardHtml).join('') : `<div class="card" style="text-align:center;padding:36px 16px;background:var(--marble);border-radius:var(--radius);border:1px solid var(--line);">
+      <div style="font-size:2.2rem;margin-bottom:8px">📋</div>
+      <p style="margin:0 0 6px;font-weight:700;font-size:1.05rem;color:var(--ink)">No menu items yet · 暂无菜品</p>
+      <p class="small muted" style="margin:0">Tap "+ Add food" above to add your first dish.</p>
+    </div>`) : `<p class="muted">${t('loading')}</p>`}
     <datalist id="sections">${[...new Set((items || []).map((i) => i.section).filter(Boolean))].map((x) => `<option value="${esc(x)}">`).join('')}</datalist>`,
   `${t('tileMenu')} · ${esc(pick(s))}`);
   if (mixed) bindPriceGuide(body, s);
@@ -450,7 +499,6 @@ function bindReviewDelete(body) {
 function renderStalls() {
   const body = shell('#/', `
     <a class="btn red big" href="#/stall-edit/new">${ICONS.plus}${t('addStall')}</a>
-    ${!S.all.length ? `<button type="button" class="btn big" id="starter">${t('starterStalls')}</button>` : ''}
     <div class="help">${t('stallsHelp')}</div>
     ${S.all.map((s) => `<div class="card stack ${s.ownerUid || s.ownerEmail ? '' : 'warn'}">
       <div class="row" style="flex-wrap:nowrap">
@@ -463,19 +511,7 @@ function renderStalls() {
         <a class="btn" href="#/stall-edit/${encodeURIComponent(s.id)}">${t('edit')}</a>
         <a class="btn" href="#/stall/${encodeURIComponent(s.id)}">${t('menu')}</a>
       </div>
-    </div>`).join('')}
-    ${S.all.length ? `<div class="card stack"><div class="help">${t('sampleMenusHelp')}</div>
-      <button type="button" class="btn" id="samples">${t('sampleMenus')}</button></div>` : ''}`, t('tileStalls'));
-  $('#starter', body)?.addEventListener('click', (e) => saving(e.currentTarget, async () => {
-    for (const s of STARTER_STORES) await api.createStore(s);
-  }, t('starterDone')));
-  $('#samples', body)?.addEventListener('click', (e) => saving(e.currentTarget, async () => {
-    for (const s of S.all) {
-      const items = await firstValue((cb) => api.watchItems(s.id, cb));
-      if (items.length) continue;
-      for (const it of sampleItems(s.number)) await api.addItem(s.id, it);
-    }
-  }, t('sampleDone')));
+    </div>`).join('')}`, t('tileStalls'));
 }
 
 const isGmail = (email) => /@(gmail|googlemail)\.com$/i.test(email || '');

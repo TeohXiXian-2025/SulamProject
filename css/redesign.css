@@ -1,0 +1,220 @@
+/* ==========================================================================
+   金城茶餐室 Restoran Kim Seng — Modern Kopitiam UI Redesign
+   Harmonized with Traditional Kopitiam Signboard, Nanyang Mosaic Tiles,
+   and Responsive PC / iPad / Mobile Ease of Use
+   ========================================================================== */
+
+:root {
+  /* Aligned Kopitiam Variables */
+  --wall: #f6f3eb;
+  --marble: #ffffff;
+  --marble-2: #f2ebd9;
+  --ink: #201712;
+  --ink-2: #5d4e43;
+  --ink-3: #8e7c6e;
+  --line: #e4dacb;
+  --line-strong: #d0c2ad;
+  --red: #941a15;
+  --red-dark: #6e100c;
+  --red-light: #b42822;
+  --red-soft: #fde8e7;
+  --gold: #e5b044;
+  --gold-light: #f7d277;
+  --gold-dark: #ad791e;
+  --jade: #1b5e4a;
+  --jade-dark: #124032;
+  --jade-light: #268065;
+  --jade-soft: #eaf5f1;
+  --jade-border: #a3d9c7;
+  --open: #126345;
+  --open-soft: #dcfce7;
+  --open-line: #86efac;
+  --closed: #941a15;
+  --closed-soft: #fee2e2;
+  --closed-line: #fca5a5;
+  --butter: #fef3c7;
+  --butter-ink: #78350f;
+  --butter-line: #fde68a;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --shadow: 0 4px 18px -2px rgba(32, 23, 18, 0.08), 0 2px 6px -1px rgba(32, 23, 18, 0.04);
+  --shadow-lg: 0 12px 32px -4px rgba(32, 23, 18, 0.12), 0 4px 12px -2px rgba(32, 23, 18, 0.06);
+  --sign: "Noto Serif SC", "Songti SC", "SimSun", "STSong", Georgia, serif;
+}
+
+body {
+  background: radial-gradient(circle at 50% -200px, #fbf7ee 0, var(--wall) 500px);
+  color: var(--ink);
+}
+
+/* Enhanced Signboard Frame (matches reference image uploaded by user) */
+.signboard {
+  background: linear-gradient(180deg, #9b1c15 0%, #85140e 55%, #76100b 100%) !important;
+  border-bottom: 3px solid #560a06 !important;
+}
+
+.signboard .frame {
+  border: 2px solid #e5b044 !important;
+  outline: 1.5px solid #d49c32 !important;
+  outline-offset: 3.5px !important;
+  background: radial-gradient(ellipse at 50% 35%, rgba(186, 37, 30, 0.5) 0%, rgba(118, 16, 11, 0.88) 100%) !important;
+}
+
+.signboard .zh {
+  font-family: var(--sign) !important;
+  color: #f7d277 !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 12px rgba(247, 210, 119, 0.3) !important;
+}
+
+.signboard .en {
+  font-family: var(--sign) !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Button & Focus Enhancement */
+.btn {
+  font-size: 0.95rem;
+  border-radius: 12px;
+  min-height: 46px;
+}
+.btn.red {
+  background: var(--red);
+  border-color: var(--red-dark);
+  color: #fff;
+}
+.btn.red:hover:not(:disabled) {
+  background: var(--red-dark);
+}
+.btn.green {
+  background: var(--open);
+  border-color: #0d4a34;
+  color: #fff;
+}
+.btn.on {
+  background: var(--jade);
+  border-color: var(--jade-dark);
+  color: #fff;
+}
+input:focus, select:focus, textarea:focus, .btn:focus-visible, a:focus-visible, button:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Enamel Number Plates */
+.plate {
+  background: var(--jade);
+  color: #fff;
+  border-radius: 10px;
+  font-family: var(--sign);
+  font-weight: 900;
+  box-shadow: 0 2px 6px rgba(27, 94, 74, 0.25);
+}
+.plate.off {
+  background: #887b6f;
+  box-shadow: none;
+}
+
+/* Card Elevate on Hover */
+.card, .board, details.fold {
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+  background: var(--marble);
+}
+.stall-row:hover {
+  transform: translateY(-2px);
+  border-color: var(--jade-border);
+  box-shadow: 0 8px 24px rgba(27, 94, 74, 0.12);
+}
+
+/* Price Formatting */
+.price {
+  color: var(--red);
+  font-family: var(--sign);
+  font-weight: 900;
+}
+
+/* Floor Plan 3D */
+.fp-wrap {
+  background: #e8e4db;
+  border: 1px solid var(--line);
+}
+.fp-hint {
+  background: rgba(32, 23, 18, 0.85);
+  color: #fff;
+}
+
+/* Mobile Responsiveness Refinements */
+@media (max-width: 640px) {
+  .header-nav {
+    display: none !important;
+  }
+  .signboard {
+    padding: 8px 10px !important;
+  }
+  .signboard .frame {
+    padding: 6px 12px 5px !important;
+    border-width: 1.5px !important;
+    outline-width: 1px !important;
+    outline-offset: 2.5px !important;
+  }
+  .signboard .zh {
+    font-size: 1.55rem !important;
+    letter-spacing: 0.16em !important;
+    text-indent: 0.16em !important;
+  }
+  .signboard .en {
+    font-size: 0.62rem !important;
+    letter-spacing: 0.18em !important;
+    text-indent: 0.18em !important;
+    margin-top: 2px !important;
+  }
+  .customer-subbar-inner {
+    min-height: 48px !important;
+    padding-inline: 12px !important;
+    gap: 8px !important;
+  }
+  .header-status-slot {
+    margin-right: auto !important;
+  }
+  .header-status-slot .pill .detail-time {
+    display: none !important;
+  }
+  .header-status-slot .pill {
+    font-size: 0.78rem !important;
+    padding: 2px 8px !important;
+  }
+  .lang-switch {
+    margin-left: auto !important;
+  }
+  .lang-switch button {
+    padding: 3px 8px !important;
+    font-size: 0.75rem !important;
+    min-height: 28px !important;
+  }
+  .filter-row {
+    display: flex !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+  .filter-row .btn, .filter-btn {
+    flex: 1 1 0 !important;
+    min-height: 42px !important;
+    font-size: 0.8rem !important;
+    padding: 6px 8px !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+  }
+}
+
+/* Safe Area Insets for Mobile */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .bottom-nav {
+    padding-bottom: calc(4px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .btn, .stall-row, .tile, .stall-thumb-img { transition: none !important; }
+}
