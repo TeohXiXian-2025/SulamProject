@@ -29,7 +29,7 @@ api.onAuth(async (u) => {
   if (u) {
     const admins = await api.getAdmins().catch(() => null);
     state.isAdmin = !!admins?.includes(u.email);
-    const watch = state.isAdmin && params.get('store') ? api.watchStores : (cb) => api.watchOwnedStores(u.uid, cb);
+    const watch = state.isAdmin && params.get('store') ? api.watchStores : (cb) => api.watchOwnedStores(u, cb);
     unsubs.push(watch((list) => {
       state.stores = list;
       if (!list.some((s) => s.id === state.storeId)) selectStore(list[0]?.id || null);
@@ -127,13 +127,31 @@ function renderUnlinked() {
   app.innerHTML = `${header()}
     <main class="wrap"><div class="card login-box stack">
       <p>${t('noStoreLinked')}</p>
-      <p class="small muted">${t('giveIdToAdmin')}</p>
-      <code class="id">${esc(state.user.uid)}</code>
       <p class="small muted">${esc(state.user.email)}</p>
+      ${state.user.verified ? '' : `<div class="note stack">
+        <div>${t('verifyHint')}</div>
+        <div class="row"><button class="btn small" id="verify">✉️ ${t('verifyEmail')}</button>
+          <button class="btn small primary" id="verified">↻ ${t('iVerified')}</button></div></div>`}
+      <details><summary class="small muted">${t('giveIdToAdmin')}</summary>
+        <code class="id">${esc(state.user.uid)}</code></details>
       <button class="btn" id="out">${t('signOut')}</button>
     </div></main>`;
   bindLangSwitcher(app);
   $('#out').onclick = () => api.signOut();
+  $('#verify')?.addEventListener('click', (e) => saving(e.currentTarget, () => api.sendVerification(), t('verifySent')));
+  $('#verified')?.addEventListener('click', async () => {
+    const u = await api.refreshUser();
+    if (!u?.verified) { toast(t('notVerifiedYet'), 'error'); return; }
+    unsubs.forEach((f) => f());
+    state.user = u;
+    state.stores = null;
+    unsubs = [api.watchOwnedStores(u, (list) => {
+      state.stores = list;
+      if (!list.some((s) => s.id === state.storeId)) selectStore(list[0]?.id || null);
+      render();
+    })];
+    render();
+  });
 }
 
 // --- Tabs ----------------------------------------------------------------------
