@@ -4,6 +4,14 @@
   },
   "hosting": {
     "public": ".",
-    "ignore": ["firebase.json", "firestore.rules", "docs/**", "README.md", "**/.*", "**/node_modules/**"]
+    "ignore": [
+      "firebase.json",
+      "firestore.rules",
+      "docs/**",
+      "README.md",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "cleanUrls": true
   }
 }

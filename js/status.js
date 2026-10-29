@@ -143,5 +143,25 @@ export function hoursTable(hours) {
 
 export function statusPill(st) {
   const cls = st.open ? 'open' : 'closed';
-  return `<span class="pill ${cls}"><span class="dot"></span>${st.label}</span>`;
+  const text = st.detail ? `${st.label} · ${st.detail}` : st.label;
+  return `<span class="pill ${cls}">${text}</span>`;
+}
+
+const BOX_ICONS = {
+  open: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>',
+  closed: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M6 18L18 6"/></svg>',
+};
+
+// Big green / red box. `title` overrides the headline (e.g. "Your stall is OPEN").
+export function statusBox(st, title) {
+  const cls = st.open ? 'open' : 'closed';
+  const sub = [st.detail, st.note].filter(Boolean).join(' — ');
+  return `<div class="status-box ${cls}">${BOX_ICONS[cls]}<div>
+    <div class="big">${title || (st.open ? t('openNowBig') : t('closedBig'))}</div>
+    ${sub ? `<div class="sub">${sub.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)}</div>` : ''}
+  </div></div>`;
+}
+
+export function overrideActive(ov, now = nowLocal()) {
+  return activeOverride(ov, now);
 }

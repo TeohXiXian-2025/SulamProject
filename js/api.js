@@ -5,7 +5,7 @@
 //   - Demo mode (no config): same functions, data kept in this browser's
 //     localStorage, so the site can be tried without any setup.
 import { firebaseConfig } from './config.js';
-import { DEFAULT_CENTRE, STARTER_STORES, DEMO_ITEMS } from './seed.js';
+import { DEFAULT_CENTRE, STARTER_STORES, sampleItems } from './seed.js';
 import { uid, sortStores, sortItems } from './util.js';
 
 const FIREBASE_VERSION = '10.12.2';
@@ -164,7 +164,7 @@ async function firebaseApi(config) {
 // Demo (browser only)
 // ---------------------------------------------------------------------------
 function demoApi() {
-  const KEY = 'kimseng-demo-v1';
+  const KEY = 'kimseng-demo-v2';
   const USER_KEY = 'kimseng-demo-user';
   const listeners = new Set();
   const authListeners = new Set();
@@ -182,8 +182,8 @@ function demoApi() {
       const id = `s${s.number}`;
       data.stores[id] = clean(s);
       data.items[id] = {};
-      (DEMO_ITEMS[s.number] || []).forEach((it, i) => {
-        data.items[id][`i${s.number}_${i}`] = { available: true, photo: '', section: '', ...it, createdAt: i };
+      sampleItems(s.number).forEach((it, i) => {
+        data.items[id][`i${s.number}_${i}`] = it;
       });
     }
     // Two demo stall-owner logins.

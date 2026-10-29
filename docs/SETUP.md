@@ -94,36 +94,34 @@ This depends on the GitHub account. If the repo is moved or renamed, the address
 
 ## Step 4: First-time setup on the website
 
-1. Open `https://kimseng-hawker.web.app/admin.html` → **Sign in with Google** using the project Gmail.
-2. It says *"No admin exists yet"* → click **Yes, make me admin**.
+1. Open `https://kimseng-hawker.web.app/staff` → **Continue with Google** using the project Gmail.
+2. It says *"No manager exists yet"* → tap **Yes, make me the manager**.
    (Only the very first account can do this, so do it right away.)
-3. **Stalls** tab → **Add the 10 starter stalls** (Beverage, Mixed Rice, Masakan Panas, …).
-   Edit names, numbers and categories as needed.
-4. For each stall → **Edit → Owner login**: type the stall owner's email → **Save**.
-   * **Gmail**: nothing else to do. The stall owner opens `…/owner.html` and taps
-     **Sign in with Google**. There's no password to remember.
+3. **Stalls & owners** → **Add the 10 starter stalls**. Edit names, numbers and types as needed.
+4. For a demonstration, tap **Fill empty menus with sample dishes** (drawn pictures, example
+   prices and descriptions). Stall owners replace them with real food and photos later.
+5. For each stall → **Edit → Stall owner**: type the owner's email → **Save**.
+   * **Gmail**: the stall owner opens `…/staff` and taps **Continue with Google**. No password.
    * **Other email** (Yahoo, Hotmail…): Firebase emails them a link to **set their own
-     password**. The hawker owner never knows it. Tell them to check spam if it doesn't
-     arrive. The **Send set-password email** button resends it.
-   * To remove a stall owner: **Edit → Unlink**. Their access stops immediately.
-5. **Floor Plan** tab → drag stalls, tables, entrance, toilet into the real layout →
-   **Save layout**.
-6. **Hawker centre** tab → set opening hours, address, announcement.
-7. **QR codes** tab → check the website address → print the **Poster** and **Table cards**.
-8. **Admins** tab → add the hawker centre owner's own Gmail as a second admin.
+     password**. Tell them to check spam. **Send set-password email again** resends it.
+   * To remove a stall owner: **Edit → Remove owner**. Their access stops immediately.
+6. On each stall owner's phone: open `…/staff` and **Add to Home Screen** (icon "金城 Staff").
+7. **Floor plan** → drag stalls, tables, entrance, toilet into the real layout → **Save floor plan**.
+8. **Name, hours & notice** → check 金城茶餐室 / Restoran Kim Seng, set hours and a notice.
+9. **Print QR codes** → print the **Big poster** and **Table cards**.
+10. **Managers** → add the owner's own Gmail as a second manager.
 
-## Step 5: Handover to the hawker centre owner
+## Step 5: Handover to the owner
 
 The owner can run everything with **his own Gmail**:
 
-- [ ] Website: **Admins** tab → add the owner's Gmail → he signs in at `admin.html` with Google.
+- [ ] Website: **Managers** → add the owner's Gmail → he signs in at `…/staff` with Google.
 - [ ] Firebase: console → ⚙️ *Project settings → Users and permissions → Add member* →
       owner's Gmail, role **Owner**. He can now manage the project with his own account.
-- [ ] Owner's Gmail added under **Admins**.
 - [ ] Project Gmail: password changed and given to the owner, recovery phone/email changed to the owner's.
 - [ ] A zip of the project folder saved in the project Gmail's Google Drive.
 - [ ] Owner has [USER_GUIDE.md](USER_GUIDE.md) (print it).
-- [ ] Remove your own email from **Admins**.
+- [ ] Remove your own email from **Managers**.
 
 ## Free limits (Firebase Spark plan)
 
@@ -142,7 +140,7 @@ charges money**, because the Spark plan has no card attached.
 
 * **Deleting a stall** removes its menu and reviews, but not the owner's login. To delete
   a login: Firebase console → *Authentication → Users*.
-* **Owner forgot password**: on `owner.html` they type their email and tap *Forgot password?*.
+* **Stall owner forgot password**: on `…/staff` they type their email and tap *First time, or forgot password?*.
 * **Bad review / spam**: admin opens the stall's *Menu / Status* page → *Reviews* → *Delete*.
 * **Changing the code later**: edit the files, then run `firebase deploy --only hosting` again.
 * **Stall owner sees "not linked"**: check the email the admin typed matches exactly.
