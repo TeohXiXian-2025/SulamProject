@@ -5,6 +5,11 @@
 const dict = {
   en: {
     centreName: 'Kim Seng Hawker Centre',
+    ownerEmailHint: 'Gmail: the stall owner simply taps "Sign in with Google" — no password. Other email: they get an email link to set their own password.',
+    sendSetPw: 'Send set-password email', setPwSent: 'Email sent — the stall owner sets their own password from the link.',
+    verifyHint: 'If the manager added your email to a stall, verify your email first:', verifyEmail: 'Send verification email',
+    verifySent: 'Verification email sent. Open the link, then come back.', iVerified: 'I have verified',
+    notVerifiedYet: 'Not verified yet. Open the link in your email first.',
     stalls: 'Stalls', floorPlan: 'Floor Plan', open: 'Open', closed: 'Closed',
     openNow: 'Open now', closedNow: 'Closed now', allStalls: 'All stalls',
     search: 'Search stall…', stallNo: 'Stall', menu: 'Menu',
@@ -73,6 +78,11 @@ const dict = {
   },
   zh: {
     centreName: '金成小贩中心',
+    ownerEmailHint: 'Gmail：档主直接按「用 Google 登录」，不用密码。其他电邮：档主会收到电邮链接，自己设定密码。',
+    sendSetPw: '发送设定密码电邮', setPwSent: '电邮已发送 — 档主可通过链接自己设定密码。',
+    verifyHint: '如果管理员已把你的电邮加到档口，请先验证电邮：', verifyEmail: '发送验证电邮',
+    verifySent: '验证电邮已发送。打开链接后再回来。', iVerified: '我已验证',
+    notVerifiedYet: '还没验证。请先打开电邮里的链接。',
     stalls: '档口', floorPlan: '平面图', open: '营业中', closed: '休息',
     openNow: '营业中', closedNow: '休息中', allStalls: '全部档口',
     search: '搜索档口…', stallNo: '档口', menu: '菜单',
@@ -140,6 +150,11 @@ const dict = {
   },
   ms: {
     centreName: 'Pusat Penjaja Kim Seng',
+    ownerEmailHint: 'Gmail: pemilik gerai hanya tekan "Log masuk dengan Google" — tiada kata laluan. E-mel lain: mereka terima pautan e-mel untuk tetapkan kata laluan sendiri.',
+    sendSetPw: 'Hantar e-mel tetapkan kata laluan', setPwSent: 'E-mel dihantar — pemilik gerai tetapkan kata laluan sendiri melalui pautan.',
+    verifyHint: 'Jika pengurus telah menambah e-mel anda ke gerai, sahkan e-mel anda dahulu:', verifyEmail: 'Hantar e-mel pengesahan',
+    verifySent: 'E-mel pengesahan dihantar. Buka pautan, kemudian kembali.', iVerified: 'Saya sudah sahkan',
+    notVerifiedYet: 'Belum disahkan. Buka pautan dalam e-mel dahulu.',
     stalls: 'Gerai', floorPlan: 'Pelan Lantai', open: 'Buka', closed: 'Tutup',
     openNow: 'Buka sekarang', closedNow: 'Tutup sekarang', allStalls: 'Semua gerai',
     search: 'Cari gerai…', stallNo: 'Gerai', menu: 'Menu',

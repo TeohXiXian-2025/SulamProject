@@ -148,7 +148,7 @@ function renderStalls(body) {
         <div class="info">
           <div class="title"><span class="badge-num" style="min-width:26px;height:26px;font-size:.8rem">${esc(s.number)}</span>
             ${esc(pick(s))} ${s.type === 'mixedRice' ? '🍱' : ''}</div>
-          <div class="small muted">${t(`cat_${s.category}`)} · ${s.ownerUid ? `👤 ${esc(s.ownerEmail || s.ownerUid)}` : `⚠️ ${t('notLinked')}`}</div>
+          <div class="small muted">${t(`cat_${s.category}`)} · ${s.ownerUid || s.ownerEmail ? `👤 ${esc(s.ownerEmail || s.ownerUid)}` : `⚠️ ${t('notLinked')}`}</div>
           <div class="row" style="margin-top:6px">
             <a class="btn small" href="owner.html?store=${encodeURIComponent(s.id)}">🍽️ ${t('menu')} / ${t('status')}</a>
             <button class="btn small" data-edit>${t('edit')}</button>
@@ -169,6 +169,8 @@ function renderStalls(body) {
   });
 }
 
+const isGmail = (email) => /@(gmail|googlemail)\.com$/i.test(email || '');
+
 function nextNumber() {
   const used = new Set(state.stores.map((s) => Number(s.number)));
   let n = 1;
@@ -179,6 +181,7 @@ function nextNumber() {
 function openStoreDialog(s) {
   const isNew = !s;
   const d = s || { number: nextNumber(), category: 'other', type: 'normal' };
+  const linked = !!(d.ownerUid || d.ownerEmail);
   openDialog(`
     <form class="stack" id="sf">
       <h2>${isNew ? t('addStall') : `${t('edit')} · ${esc(pick(d))}`}</h2>
@@ -192,13 +195,13 @@ function openStoreDialog(s) {
       <label class="check"><input type="checkbox" name="mixed" ${d.type === 'mixedRice' ? 'checked' : ''}> ${t('mixedRiceMode')}</label>
       <fieldset class="card stack" style="box-shadow:none">
         <legend><b>${t('ownerAccount')}</b></legend>
-        <div id="owner-state" class="small">${d.ownerUid ? `✅ ${t('linkedTo', { x: esc(d.ownerEmail || d.ownerUid) })}
-          <button type="button" class="btn small" id="unlink">${t('unlink')}</button>` : t('notLinked')}</div>
-        <div id="owner-new" class="${d.ownerUid ? 'hidden' : ''} stack">
-          <div class="grid2">
-            <input type="email" name="oemail" placeholder="${esc(t('ownerEmail'))}" autocomplete="off">
-            <input type="text" name="opw" placeholder="${esc(t('ownerPassword'))}" minlength="6" autocomplete="off">
-          </div>
+        <div id="owner-state" class="small row">${linked ? `✅ ${t('linkedTo', { x: esc(d.ownerEmail || d.ownerUid) })}
+          <button type="button" class="btn small danger" id="unlink">${t('unlink')}</button>
+          ${d.ownerEmail && !isGmail(d.ownerEmail) ? `<button type="button" class="btn small" id="resend">✉️ ${t('sendSetPw')}</button>` : ''}`
+          : t('notLinked')}</div>
+        <div id="owner-new" class="${linked ? 'hidden' : ''} stack">
+          <input type="email" name="oemail" placeholder="${esc(t('ownerEmail'))}" autocomplete="off">
+          <p class="small muted" style="margin:0">${t('ownerEmailHint')}</p>
           <details><summary class="small muted">${t('linkById')}</summary>
             <input type="text" name="ouid" placeholder="Account ID" style="margin-top:6px"></details>
         </div>
@@ -208,6 +211,7 @@ function openStoreDialog(s) {
         <button type="submit" class="btn primary">${t('save')}</button></div>
     </form>`, (dlg) => {
     let owner = { ownerUid: d.ownerUid || '', ownerEmail: d.ownerEmail || '' };
+    $('#resend', dlg)?.addEventListener('click', (e) => saving(e.currentTarget, () => api.resetPassword(d.ownerEmail), t('setPwSent')));
     $('#unlink', dlg)?.addEventListener('click', () => {
       owner = { ownerUid: '', ownerEmail: '' };
       $('#owner-state', dlg).textContent = t('notLinked');
@@ -228,14 +232,19 @@ function openStoreDialog(s) {
         category: f.get('category'),
         type: f.get('mixed') ? 'mixedRice' : 'normal',
       };
+      let doneMsg = t('saved');
       const ok = await saving(e.submitter, async () => {
         const oemail = f.get('oemail').trim().toLowerCase();
         const ouid = f.get('ouid').trim();
-        if (!owner.ownerUid && ouid) owner = { ownerUid: ouid, ownerEmail: oemail };
-        else if (!owner.ownerUid && oemail) {
-          const pw = f.get('opw');
-          if (pw.length < 6) throw Object.assign(new Error(), { code: 'weak-password' });
-          owner = { ownerUid: await api.createOwnerAccount(oemail, pw), ownerEmail: oemail };
+        const isLinked = owner.ownerUid || owner.ownerEmail;
+        if (!isLinked && ouid) owner = { ownerUid: ouid, ownerEmail: oemail };
+        else if (!isLinked && oemail && isGmail(oemail)) {
+          // Gmail: the owner just taps "Sign in with Google". No password.
+          owner = { ownerUid: '', ownerEmail: oemail };
+        } else if (!isLinked && oemail) {
+          // Other email: create a login and email a link to choose a password.
+          owner = { ownerUid: (await api.createOwnerAccount(oemail)) || '', ownerEmail: oemail };
+          doneMsg = t('setPwSent');
         }
         Object.assign(data, owner);
         if (data.type === 'mixedRice' && !s?.mixedRice) data.mixedRice = { prices: [], note: '' };
@@ -250,8 +259,8 @@ function openStoreDialog(s) {
         } else {
           await api.updateStore(s.id, data);
         }
-      });
-      if (ok) dlg.close();
+      }, null);
+      if (ok) { toast(doneMsg); dlg.close(); }
     };
   });
 }

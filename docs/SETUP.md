@@ -50,21 +50,16 @@ Signed in with the new Gmail, go to <https://console.firebase.google.com>.
    This config is **not a secret**. It is meant to be public. The security comes from the
    rules you published in step 2.
 
-## Step 3: Put the website online (pick one)
+## Step 3: Put the website online
 
-### Option A: GitHub Pages (easiest, no software to install)
+### Recommended: Firebase Hosting (no GitHub needed)
 
-1. Create a GitHub account with the project Gmail, and put this repository there
-   (*Settings → Transfer ownership* from your own account, or upload a copy).
-2. Repository *Settings → Pages → Build and deployment → Deploy from a branch →
-   `main` / `/ (root)` → Save*.
-3. After a minute the site is at `https://<github-username>.github.io/<repo-name>/`.
-4. In Firebase: *Authentication → Settings → Authorized domains → Add domain* →
-   `<github-username>.github.io`. (Without this, Google sign-in shows an error.)
+The site lives in the same free Firebase project, at
+**`https://kimseng-hawker.web.app`**. That address belongs to the Firebase project, so it
+never changes when GitHub accounts change, and the printed QR codes keep working.
 
-### Option B: Firebase Hosting (address like `kimseng-hawker.web.app`)
-
-Needs Node.js on a computer once:
+You need a computer with [Node.js](https://nodejs.org) (LTS) installed. Open a terminal
+**in this project folder**, then run these one at a time:
 
 ```bash
 npm install -g firebase-tools
@@ -74,25 +69,43 @@ npm install -g firebase-tools
 firebase login
 ```
 
+(sign in with the **project Gmail**)
+
 ```bash
-firebase deploy --only hosting,firestore:rules --project kimseng-hawker
+firebase deploy --only hosting,firestore:rules
 ```
 
-The `.web.app` address is authorised for Google sign-in automatically.
+That's it. The project name is already set in `.firebaserc`. Run the last command again
+whenever the code changes. The `.web.app` address is already allowed for Google sign-in.
 
-> ⚠️ **Print QR codes only after the final address is decided.** If the address changes
-> later (e.g. the GitHub repo is renamed or moved), printed QR codes stop working.
+Keep a copy of this project folder (zip it into the project Gmail's Google Drive) so that
+whoever maintains it later has the code, even without GitHub.
+
+### Alternative: GitHub Pages
+
+1. Repository *Settings → Pages → Deploy from a branch → `main` / `(root)` → Save*.
+2. The site appears at `https://<github-username>.github.io/<repo-name>/`.
+3. In Firebase: *Authentication → Settings → Authorized domains → Add domain* →
+   `<github-username>.github.io`.
+
+This depends on the GitHub account. If the repo is moved or renamed, the address changes.
+
+> ⚠️ **Print QR codes only after the final address is decided.**
 
 ## Step 4: First-time setup on the website
 
-1. Open `https://<your-site>/admin.html` → **Sign in with Google** using the project Gmail.
+1. Open `https://kimseng-hawker.web.app/admin.html` → **Sign in with Google** using the project Gmail.
 2. It says *"No admin exists yet"* → click **Yes, make me admin**.
    (Only the very first account can do this, so do it right away.)
 3. **Stalls** tab → **Add the 10 starter stalls** (Beverage, Mixed Rice, Masakan Panas, …).
    Edit names, numbers and categories as needed.
-4. For each stall → **Edit → Owner login**: type the stall owner's email and a starting
-   password → **Save**. Give them the email, password and the link `…/owner.html`.
-   *Tip:* the owner can use any email they can read, so that "Forgot password?" works.
+4. For each stall → **Edit → Owner login**: type the stall owner's email → **Save**.
+   * **Gmail**: nothing else to do. The stall owner opens `…/owner.html` and taps
+     **Sign in with Google**. There's no password to remember.
+   * **Other email** (Yahoo, Hotmail…): Firebase emails them a link to **set their own
+     password**. The hawker owner never knows it. Tell them to check spam if it doesn't
+     arrive. The **Send set-password email** button resends it.
+   * To remove a stall owner: **Edit → Unlink**. Their access stops immediately.
 5. **Floor Plan** tab → drag stalls, tables, entrance, toilet into the real layout →
    **Save layout**.
 6. **Hawker centre** tab → set opening hours, address, announcement.
@@ -101,9 +114,14 @@ The `.web.app` address is authorised for Google sign-in automatically.
 
 ## Step 5: Handover to the hawker centre owner
 
+The owner can run everything with **his own Gmail**:
+
+- [ ] Website: **Admins** tab → add the owner's Gmail → he signs in at `admin.html` with Google.
+- [ ] Firebase: console → ⚙️ *Project settings → Users and permissions → Add member* →
+      owner's Gmail, role **Owner**. He can now manage the project with his own account.
 - [ ] Owner's Gmail added under **Admins**.
 - [ ] Project Gmail: password changed and given to the owner, recovery phone/email changed to the owner's.
-- [ ] GitHub repo is under the project account (or owner's account).
+- [ ] A zip of the project folder saved in the project Gmail's Google Drive.
 - [ ] Owner has [USER_GUIDE.md](USER_GUIDE.md) (print it).
 - [ ] Remove your own email from **Admins**.
 
@@ -126,4 +144,6 @@ charges money**, because the Spark plan has no card attached.
   a login: Firebase console → *Authentication → Users*.
 * **Owner forgot password**: on `owner.html` they type their email and tap *Forgot password?*.
 * **Bad review / spam**: admin opens the stall's *Menu / Status* page → *Reviews* → *Delete*.
-* **Changing the code later**: edit the files on GitHub. GitHub Pages republishes automatically.
+* **Changing the code later**: edit the files, then run `firebase deploy --only hosting` again.
+* **Stall owner sees "not linked"**: check the email the admin typed matches exactly.
+  An email-and-password login must verify its email first (there's a button on that screen).

@@ -46,7 +46,11 @@ async function firebaseApi(config) {
   const adminsRef = F.doc(db, 'config', 'admins');
   const withId = (d) => ({ id: d.id, ...d.data() });
   const millis = (v) => (v?.toMillis ? v.toMillis() : v || Date.now());
-  const mapUser = (u) => u && { uid: u.uid, email: lower(u.email), name: u.displayName || '', provider: u.providerData[0]?.providerId };
+  const mapUser = (u) => u && {
+    uid: u.uid, email: lower(u.email), name: u.displayName || '', verified: u.emailVerified,
+    provider: u.providerData[0]?.providerId,
+  };
+  const randomPassword = () => Array.from(crypto.getRandomValues(new Uint8Array(18)), (b) => b.toString(16).padStart(2, '0')).join('');
   const onErr = (e) => console.error(e);
 
   return {
@@ -67,19 +71,32 @@ async function firebaseApi(config) {
     signOut: () => A.signOut(auth),
     resetPassword: (email) => A.sendPasswordResetEmail(auth, email.trim()),
     changePassword: (pw) => A.updatePassword(auth.currentUser, pw),
+    sendVerification: () => A.sendEmailVerification(auth.currentUser),
+    async refreshUser() {
+      await auth.currentUser?.reload();
+      await auth.currentUser?.getIdToken(true);
+      return mapUser(auth.currentUser);
+    },
 
-    // Creates a login for a stall owner without signing the admin out, by
-    // using a temporary second Firebase app instance.
-    async createOwnerAccount(email, pw) {
+    // Creates a login for a non-Gmail stall owner and emails them a link to
+    // choose their own password. Uses a temporary second Firebase app so the
+    // admin stays signed in. Returns the new account id, or null if the email
+    // already had a login (a set-password email is still sent).
+    async createOwnerAccount(email) {
       const tmp = appMod.initializeApp(config, `tmp-${Date.now()}`);
+      let uidOut = null;
       try {
         const tmpAuth = A.initializeAuth(tmp, { persistence: A.inMemoryPersistence });
-        const cred = await A.createUserWithEmailAndPassword(tmpAuth, email.trim(), pw);
+        const cred = await A.createUserWithEmailAndPassword(tmpAuth, email.trim(), randomPassword());
+        uidOut = cred.user.uid;
         await A.signOut(tmpAuth);
-        return cred.user.uid;
+      } catch (e) {
+        if (e.code !== 'auth/email-already-in-use') throw e;
       } finally {
         await appMod.deleteApp(tmp).catch(() => {});
       }
+      await A.sendPasswordResetEmail(auth, email.trim());
+      return uidOut;
     },
 
     watchCentre: (cb) => F.onSnapshot(centreRef, (s) => cb(s.exists() ? { ...DEFAULT_CENTRE, ...s.data() } : clean(DEFAULT_CENTRE)), onErr),
@@ -93,8 +110,25 @@ async function firebaseApi(config) {
 
     watchStores: (cb) => F.onSnapshot(storesCol, (s) => cb(sortStores(s.docs.map(withId))), onErr),
     watchStore: (id, cb) => F.onSnapshot(F.doc(db, 'stores', id), (s) => cb(s.exists() ? withId(s) : null), onErr),
-    watchOwnedStores: (ownerUid, cb) =>
-      F.onSnapshot(F.query(storesCol, F.where('ownerUid', '==', ownerUid)), (s) => cb(sortStores(s.docs.map(withId))), onErr),
+    // Stalls linked to this login by account id, or by a verified email
+    // (e.g. a stall owner who signs in with their Gmail).
+    watchOwnedStores(user, cb) {
+      const found = { uid: null, email: null };
+      const emit = () => {
+        if (found.uid === null || found.email === null) return;
+        const all = new Map([...found.uid, ...found.email].map((s) => [s.id, s]));
+        cb(sortStores([...all.values()]));
+      };
+      const unsubs = [
+        F.onSnapshot(F.query(storesCol, F.where('ownerUid', '==', user.uid)), (s) => { found.uid = s.docs.map(withId); emit(); }, onErr),
+      ];
+      if (user.email && user.verified) {
+        unsubs.push(F.onSnapshot(F.query(storesCol, F.where('ownerEmail', '==', user.email)), (s) => { found.email = s.docs.map(withId); emit(); }, onErr));
+      } else {
+        found.email = [];
+      }
+      return () => unsubs.forEach((u) => u());
+    },
     createStore: async (data) => (await F.addDoc(storesCol, clean(data))).id,
     updateStore: (id, patch) => F.updateDoc(F.doc(db, 'stores', id), clean(patch)),
     async updateStores(patches) {
@@ -187,7 +221,8 @@ function demoApi() {
   }
   const fail = (code, message) => Object.assign(new Error(message), { code });
   const isAdmin = () => user && db.admins?.includes(user.email);
-  const ownsStore = (id) => user && db.stores[id]?.ownerUid === user.uid;
+  const ownsStore = (id) => user && (db.stores[id]?.ownerUid === user.uid
+    || (user.verified && !!db.stores[id]?.ownerEmail && db.stores[id].ownerEmail === user.email));
   const mustAdmin = () => { if (!isAdmin()) throw fail('permission-denied', 'Missing or insufficient permissions.'); };
   const mustOwn = (id) => { if (!isAdmin() && !ownsStore(id)) throw fail('permission-denied', 'Missing or insufficient permissions.'); };
   const storeList = () => sortStores(Object.entries(db.stores).map(([id, s]) => ({ id, ...s })));
@@ -204,12 +239,12 @@ function demoApi() {
     async signInGoogle() {
       const email = window.prompt('Demo mode: type any Gmail address to pretend to sign in with Google', 'demo.user@gmail.com');
       if (!email) return;
-      setUser({ uid: `g-${lower(email)}`, email: lower(email), name: email.split('@')[0], provider: 'google.com' });
+      setUser({ uid: `g-${lower(email)}`, email: lower(email), name: email.split('@')[0], provider: 'google.com', verified: true });
     },
     async signInEmail(email, pw) {
       const acc = db.accounts[lower(email)];
       if (!acc || acc.password !== pw) throw fail('auth/invalid-credential', 'Wrong email or password');
-      setUser({ uid: acc.uid, email: lower(email), name: '', provider: 'password' });
+      setUser({ uid: acc.uid, email: lower(email), name: '', provider: 'password', verified: !!acc.verified });
     },
     async signOut() { setUser(null); },
     async resetPassword() { /* nothing to send in demo mode */ },
@@ -217,11 +252,22 @@ function demoApi() {
       const acc = Object.values(db.accounts).find((a) => a.uid === user?.uid);
       if (acc) { acc.password = pw; persist(); }
     },
-    async createOwnerAccount(email, pw) {
+    sendVerification: async () => {
+      const acc = db.accounts[user?.email];
+      if (acc) { acc.verified = true; persist(); }
+    },
+    refreshUser: async () => {
+      const acc = db.accounts[user?.email];
+      if (acc) setUser({ ...user, verified: !!acc.verified });
+      return user;
+    },
+    // Demo mode cannot send email, so the "chosen" password is demo123.
+    async createOwnerAccount(email) {
       mustAdmin();
-      if (db.accounts[lower(email)]) throw fail('auth/email-already-in-use', 'Email already in use');
+      const acc = db.accounts[lower(email)];
+      if (acc) return null;
       const id = `u-${uid()}`;
-      db.accounts[lower(email)] = { password: pw, uid: id };
+      db.accounts[lower(email)] = { password: 'demo123', uid: id };
       persist();
       return id;
     },
@@ -237,7 +283,8 @@ function demoApi() {
 
     watchStores: (cb) => watch(storeList, cb),
     watchStore: (id, cb) => watch(() => (db.stores[id] ? { id, ...db.stores[id] } : null), cb),
-    watchOwnedStores: (ownerUid, cb) => watch(() => storeList().filter((s) => s.ownerUid === ownerUid), cb),
+    watchOwnedStores: (u, cb) => watch(() => storeList().filter((s) => s.ownerUid === u.uid
+      || (u.verified && s.ownerEmail && s.ownerEmail === u.email)), cb),
     async createStore(data) {
       mustAdmin();
       const id = `s-${uid()}`;
@@ -289,7 +336,7 @@ function demoApi() {
 export function errorText(e) {
   const code = e?.code || '';
   if (code.includes('invalid-credential') || code.includes('wrong-password') || code.includes('user-not-found')) return 'Wrong email or password';
-  if (code.includes('email-already-in-use')) return 'This email already has a login. Use "Link existing account ID" or another email.';
+  if (code.includes('email-already-in-use')) return 'This email already has a login.';
   if (code.includes('weak-password')) return 'Password must be at least 6 characters';
   if (code.includes('invalid-email')) return 'Invalid email address';
   if (code.includes('too-many-requests')) return 'Too many attempts. Please wait a moment.';

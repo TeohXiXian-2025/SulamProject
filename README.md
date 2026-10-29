@@ -12,7 +12,7 @@ Interface languages: English, 中文, Bahasa Melayu. Prices in RM, times in Mala
 
 ## Cost: RM 0
 
-* **Hosting**: GitHub Pages or Firebase Hosting (free).
+* **Hosting**: Firebase Hosting at `kimseng-hawker.web.app` (free; GitHub Pages also works).
 * **Database and logins**: Firebase "Spark" plan (free, **no bank card needed**).
 * **Photos** are shrunk in the browser (~50–90 KB) and stored in the database, so the
   paid "Cloud Storage" add-on is not needed.

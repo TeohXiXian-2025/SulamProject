@@ -1,15 +1,17 @@
 # User guide · 使用说明
 
-Website: `https://<your-site>/`
-Stall owner login · 档主登录: `https://<your-site>/owner.html`
-Admin · 管理: `https://<your-site>/admin.html`
+Website: `https://kimseng-hawker.web.app/`
+Stall owner login · 档主登录: `https://kimseng-hawker.web.app/owner.html`
+Admin · 管理: `https://kimseng-hawker.web.app/admin.html`
 
 ---
 
 ## For stall owners · 档主
 
-**Log in · 登录**: open `owner.html`, enter the email and password given by the hawker centre manager.
-打开 `owner.html`，输入管理员给你的电邮和密码。
+**Log in · 登录**: open `owner.html`.
+* **Gmail**: tap **Sign in with Google · 用 Google 登录**. No password needed. 不需要密码。
+* **Other email · 其他电邮**: the first time, open the email from Firebase and **set your own password**,
+  then log in with email + password. 第一次请打开 Firebase 寄来的电邮，**自己设定密码**，然后用电邮和密码登录。
 
 ### Open / close · 开档 / 休息 (*Status* tab · 营业状态)
 
@@ -52,7 +54,7 @@ Log in at `admin.html` with **Sign in with Google**. 用 Google 登录。
 
 | Tab · 页面 | What to do · 做什么 |
 |---|---|
-| **Stalls · 档口** | ＋ Add stall · 添加档口. **Edit**: number, name, category, mixed-rice mode, **owner login** (create email + password for the stall owner). **Delete** removes the stall, its menu and reviews. **Menu / Status** lets you manage a stall for its owner. |
+| **Stalls · 档口** | ＋ Add stall · 添加档口. **Edit**: number, name, category, mixed-rice mode, **owner login**: type the stall owner's email only. Gmail users sign in with Google; others get an email to set their own password. **Unlink** removes a stall owner. 只需输入档主电邮；移除档主按 Unlink。 **Delete** removes the stall, its menu and reviews. **Menu / Status** lets you manage a stall for its owner. |
 | **Floor Plan · 平面图** | Drag blocks to move. Select a block → Rotate / Wider / Narrower / Longer / Shorter. ＋ Tables, Entrance, Wall, Toilet, Sink, Pillar. **Save layout** when finished. Each stall has one block; its number is the stall number. 拖动方块，完成后按保存。 |
 | **Hawker centre · 小贩中心** | Open / close the **whole centre** (e.g. Chinese New Year). When the centre is closed, every stall shows closed. Opening hours, announcement banner. 整个小贩中心休息时，所有档口显示休息。 |
 | **QR codes · 二维码** | Print a **poster**, **table cards** (with table numbers) or **stall cards** (opens that stall's menu directly). 打印海报、桌卡、档口卡。 |

@@ -18,13 +18,22 @@ service cloud.firestore {
     }
     function isAdmin() {
       return signedIn()
-        && request.auth.token.email != null
+        && request.auth.token.get('email_verified', false) == true
         && exists(adminDoc())
         && request.auth.token.email.lower() in get(adminDoc()).data.emails;
     }
+    // A stall owner is linked by account id, or by a verified email
+    // (Google sign-in emails are always verified).
+    function owns(store) {
+      return signedIn() && (
+        store.get('ownerUid', '') == request.auth.uid
+        || (store.get('ownerEmail', '') != ''
+            && request.auth.token.get('email_verified', false) == true
+            && store.get('ownerEmail', '') == request.auth.token.get('email', '').lower())
+      );
+    }
     function ownsStore(storeId) {
-      return signedIn()
-        && get(/databases/$(database)/documents/stores/$(storeId)).data.ownerUid == request.auth.uid;
+      return owns(get(/databases/$(database)/documents/stores/$(storeId)).data);
     }
     function smallPhoto(data) {
       return !('photo' in data) || (data.photo is string && data.photo.size() < 150000);
@@ -51,8 +60,7 @@ service cloud.firestore {
       allow read: if true;
       allow create, delete: if isAdmin();
       allow update: if smallPhoto(request.resource.data) && (isAdmin() || (
-        signedIn()
-        && resource.data.ownerUid == request.auth.uid
+        owns(resource.data)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'name', 'nameZh', 'description', 'descriptionZh', 'phone', 'photo',
           'hours', 'override', 'mixedRice'
