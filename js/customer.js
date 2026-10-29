@@ -1,11 +1,11 @@
 // Customer website: stall list, one stall (menu + reviews) and the floor plan.
 // No staff links here — staff use their own address (staff.html).
-import { getApi, errorText } from './api.js';
-import { t, pick, pickAlt, langSwitcher, bindLangSwitcher } from './i18n.js';
-import { centreStatus, storeStatus, statusPill, statusBox, hoursTable, nowLocal } from './status.js';
-import { $, esc, fmtPrice, toast, stars, pic, ICONS } from './util.js';
-import { art, storeArt } from './art.js';
-import { KINDS } from './forms.js';
+import { getApi, errorText } from './api.js?v=3';
+import { t, pick, pickAlt, langSwitcher, bindLangSwitcher } from './i18n.js?v=3';
+import { centreStatus, storeStatus, statusPill, statusBox, hoursTable, nowLocal } from './status.js?v=3';
+import { $, esc, fmtPrice, toast, stars, pic, ICONS } from './util.js?v=3';
+import { art, storeArt } from './art.js?v=3';
+import { KINDS } from './forms.js?v=3';
 
 const api = await getApi();
 const app = $('#app');
@@ -458,12 +458,18 @@ async function renderMap(selectedId) {
           <span class="legend-item"><i style="background:#cfc9bf"></i>${t('legendTables')}</span>
         </div>
       </div>
-      <div class="fp-wrap" id="fp"></div>
+      <div class="fp-wrap" id="fp">
+        <div class="fp-zoom-controls" role="group" aria-label="${t('mapZoom')}">
+          <button type="button" class="fp-zoom-btn" data-map-zoom="in" aria-label="${t('zoomIn')}" title="${t('zoomIn')}">+</button>
+          <button type="button" class="fp-zoom-btn" data-map-zoom="out" aria-label="${t('zoomOut')}" title="${t('zoomOut')}">−</button>
+          <button type="button" class="fp-zoom-btn fp-zoom-fit" data-map-zoom="fit" aria-label="${t('resetView')}" title="${t('resetView')}">⌗</button>
+        </div>
+      </div>
       <div id="map-card"></div>
     </div>`;
     let createFloorPlan;
     try {
-      ({ createFloorPlan } = await import('./floorplan.js'));
+      ({ createFloorPlan } = await import('./floorplan.js?v=3'));
     } finally {
       planLoading = false;
     }
@@ -478,7 +484,20 @@ async function renderMap(selectedId) {
       },
     });
     if (!plan) return;
+    $('#fp').querySelectorAll('[data-map-zoom]').forEach((button) => {
+      button.onclick = () => {
+        if (button.dataset.mapZoom === 'fit') plan.resetView();
+        else plan.zoom(button.dataset.mapZoom === 'in' ? 0.8 : 1.25);
+      };
+    });
   }
+  const zoomLabels = { in: t('zoomIn'), out: t('zoomOut'), fit: t('resetView') };
+  $('#fp .fp-zoom-controls')?.setAttribute('aria-label', t('mapZoom'));
+  $('#fp').querySelectorAll('[data-map-zoom]').forEach((button) => {
+    const label = zoomLabels[button.dataset.mapZoom];
+    button.setAttribute('aria-label', label);
+    button.title = label;
+  });
   const now = nowLocal();
   plan.setData({
     cols: state.centre.floor?.cols,
@@ -502,7 +521,7 @@ function showMapCard(id) {
   box.innerHTML = `<div class="card map-card">
     <span class="plate ${st.open ? '' : 'off'}">${esc(s.number ?? '')}</span>
     <div style="flex:1;min-width:0">
-      <div class="map-card-name"><b>${esc(pick(s))}</b>${pickAlt(s) ? `<span class="muted"> ${esc(pickAlt(s))}</span>` : ''}</div>
+      <div class="map-card-name"><b>${esc(pick(s))}</b>${pickAlt(s) ? `<span class="muted">${esc(pickAlt(s))}</span>` : ''}</div>
       <div>${statusPill(st)}</div>
     </div>
     <a class="btn red" href="#/store/${encodeURIComponent(s.id)}">${t('menu')}</a>

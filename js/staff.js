@@ -2,16 +2,16 @@
 // After login the home screen shows big tiles; each tile opens one screen
 // with a big Back button. Screens are addressed by the URL hash so the
 // phone's own back button works too.
-import { getApi, errorText } from './api.js';
-import { t, pick, pickAlt, langSwitcher, bindLangSwitcher } from './i18n.js';
-import { centreStatus, storeStatus, statusBox, nowLocal, overrideActive, todayStr } from './status.js';
-import { $, esc, toast, stars, pic, ICONS, bigIcon, CATEGORIES, categoryColor, fmtPrice } from './util.js';
-import { art, storeArt } from './art.js';
-import { DEFAULT_CENTRE, kimSengLayoutMigration } from './seed.js';
+import { getApi, errorText } from './api.js?v=3';
+import { t, pick, pickAlt, langSwitcher, bindLangSwitcher } from './i18n.js?v=3';
+import { centreStatus, storeStatus, statusBox, nowLocal, overrideActive, todayStr } from './status.js?v=3';
+import { $, esc, toast, stars, pic, ICONS, bigIcon, CATEGORIES, categoryColor, fmtPrice } from './util.js?v=3';
+import { art, storeArt } from './art.js?v=3';
+import { DEFAULT_CENTRE, kimSengLayoutMigration } from './seed.js?v=3';
 import {
   saving, statusChoicesHtml, bindStatusChoices, hoursEditorHtml, bindHoursEditor,
   photoPickerHtml, bindPhotoPicker, openItemDialog, itemCardHtml,
-} from './forms.js';
+} from './forms.js?v=3';
 
 const api = await getApi();
 const app = $('#app');
@@ -595,7 +595,7 @@ function renderStallEdit(id) {
       Object.assign(data, owner);
       if (data.type === 'mixedRice' && !s?.mixedRice) data.mixedRice = { prices: [], note: '' };
       if (isNew) {
-        const { findFreeSpot } = await import('./floorplan.js');
+        const { findFreeSpot } = await import('./floorplan.js?v=3');
         const rects = [...S.all.map((x) => x.block).filter(Boolean), ...(S.centre.floor?.extras || [])];
         Object.assign(data, {
           description: '', descriptionZh: '', phone: '', photo: '', override: null,
@@ -668,7 +668,7 @@ async function renderFloor(force) {
         <button type="button" class="btn sm" id="g-apply">✓</button></div>
       <button type="button" class="btn sm" id="renumber">${t('renumber')}</button>
     </div></details>`, t('tileFloor'));
-  const { createFloorPlan, EXTRA_TYPES } = await import('./floorplan.js');
+  const { createFloorPlan, EXTRA_TYPES } = await import('./floorplan.js?v=3');
   if (!$('#fp') || route()[0] !== 'floor') return;
   const markDirty = (v = true) => {
     planDirty = v;

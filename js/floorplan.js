@@ -5,7 +5,7 @@
 // column, y the row, w the width in columns and h the depth in rows.
 import * as THREE from 'three';
 import { OrbitControls } from '../vendor/OrbitControls.js';
-import { t } from './i18n.js';
+import { t } from './i18n.js?v=3';
 
 export const EXTRA_TYPES = {
   table: { height: 0.86, color: '#cfc9bf', w: 1.6, h: 1.6 },
@@ -316,6 +316,15 @@ export function createFloorPlan(container, { editable = false, onSelect = () => 
     resetCamera();
   }
 
+  function zoom(factor) {
+    const offset = camera.position.clone().sub(controls.target);
+    const distance = Math.max(controls.minDistance, Math.min(controls.maxDistance, offset.length() * factor));
+    camera.position.copy(controls.target).add(offset.setLength(distance));
+    camGoal.target = null;
+    userMoved = true;
+    controls.update();
+  }
+
   function applySelection(focus = true) {
     const sel = objects.find((o) => o.key === selectedKey);
     for (const o of objects) {
@@ -528,6 +537,8 @@ export function createFloorPlan(container, { editable = false, onSelect = () => 
     deleteSelected,
     setView,
     resetCamera,
+    resetView: () => { userMoved = false; resetCamera(); },
+    zoom,
     dispose() {
       ro.disconnect();
       renderer.setAnimationLoop(null);

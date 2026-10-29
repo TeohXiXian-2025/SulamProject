@@ -1,8 +1,8 @@
 // Data layer. Every page uses the configured Firebase project for
 // Firestore data and authentication.
-import { firebaseConfig } from './config.js';
-import { DEFAULT_CENTRE } from './seed.js';
-import { sortStores, sortItems } from './util.js';
+import { firebaseConfig } from './config.js?v=3';
+import { DEFAULT_CENTRE } from './seed.js?v=3';
+import { sortStores, sortItems } from './util.js?v=3';
 
 const FIREBASE_VERSION = '10.12.2';
 

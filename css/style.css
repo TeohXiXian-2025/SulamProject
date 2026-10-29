@@ -610,6 +610,7 @@ body.customer { padding-bottom: 40px; }
 }
 .stall-row .info { flex: 1; min-width: 0; }
 .stall-names { margin-bottom: 4px; }
+.stall-names .name, .stall-names .alt { display: block; }
 .stall-row .name {
   font-family: var(--sign);
   font-weight: 900;
@@ -619,7 +620,7 @@ body.customer { padding-bottom: 40px; }
 .stall-row .alt {
   font-size: 0.88rem;
   color: var(--ink-2);
-  margin-left: 6px;
+  margin-top: 2px;
 }
 .stall-meta {
   display: flex;
@@ -1008,6 +1009,29 @@ details.fold > div { padding: 14px 18px; }
   box-shadow: var(--shadow);
 }
 .fp-canvas { display: block; width: 100%; height: 100%; }
+.fp-zoom-controls {
+  position: absolute;
+  z-index: 2;
+  right: 12px;
+  bottom: 12px;
+  display: grid;
+  gap: 6px;
+}
+.fp-zoom-btn {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.fp-zoom-btn:focus-visible { outline: 3px solid var(--jade); outline-offset: 2px; }
+.fp-zoom-fit { font-size: 1.2rem; }
 .map-card {
   display: flex;
   gap: 14px;
@@ -1015,6 +1039,7 @@ details.fold > div { padding: 14px 18px; }
   border-left: 5px solid var(--jade);
 }
 .map-card-name { font-size: 1.05rem; margin-bottom: 2px; }
+.map-card-name b, .map-card-name .muted { display: block; }
 
 /* Mobile Bottom Navigation Bar */
 .bottom-nav {

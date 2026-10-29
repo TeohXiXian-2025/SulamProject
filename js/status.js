@@ -6,8 +6,8 @@
 // override: { status: 'open' | 'closed', until: 'YYYY-MM-DD', note } or null.
 //           Set by the owner for sudden changes. It applies up to and
 //           including the `until` date, then the normal schedule resumes.
-import { TIMEZONE } from './config.js';
-import { t } from './i18n.js';
+import { TIMEZONE } from './config.js?v=3';
+import { t } from './i18n.js?v=3';
 
 const fmt = new Intl.DateTimeFormat('en-CA', {
   timeZone: TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit',

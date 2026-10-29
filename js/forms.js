@@ -1,9 +1,9 @@
 // Form building blocks for the staff pages (stall owners and the manager).
-import { t, pick, pickAlt, getLang } from './i18n.js';
-import { todayStr, addDays, overrideActive } from './status.js';
-import { $, esc, toast, compressImage, fmtPrice, pic } from './util.js';
-import { errorText } from './api.js';
-import { art } from './art.js';
+import { t, pick, pickAlt, getLang } from './i18n.js?v=3';
+import { todayStr, addDays, overrideActive } from './status.js?v=3';
+import { $, esc, toast, compressImage, fmtPrice, pic } from './util.js?v=3';
+import { errorText } from './api.js?v=3';
+import { art } from './art.js?v=3';
 
 // Runs an async save, shows "Saved" or the error. Returns true on success.
 export async function saving(btn, fn, okText = t('saved')) {
