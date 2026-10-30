@@ -24,9 +24,9 @@ Setting up or handing over the project: [docs/SETUP.md](docs/SETUP.md).
 
 | Page | Who | What they can do |
 |---|---|---|
-| `index.html` | Customers (no login) | See all stalls, open/closed status, menus with photos and prices, 3D floor plan with a pin, reviews per stall (Google sign-in to write) |
-| `staff.html` (`/staff`) | Stall owners | One-tap "Close today", holiday / hours, menu with photos and a big Available / Sold out button, stall info, reviews. Mixed-rice stalls get a price guide and "dishes usually cooked" |
-| `staff.html` (`/staff`) | Manager | Close the whole kopitiam, stalls & owners, drag-and-drop 3D floor plan, shop name / hours / notice, QR posters and table cards, reviews, managers |
+| `index.html` | Customers (no login) | See all stalls, open/closed status, menus with photos and prices, 3D floor plan with a pin, reviews per stall (Google sign-in to write). On a stall page, the **Menu / Opening hours / Reviews** buttons jump to that part of the page |
+| `staff.html` (`/staff`) | Stall owners | One-tap "Close today", holiday / hours, menu with photos and a big Available / Sold out button, stall info, reviews. Mixed-rice stalls get a price guide and "dishes usually cooked". One login can own several stalls, and a stall can have up to 5 owner logins |
+| `staff.html` (`/staff`) | Manager | Close the whole kopitiam, stalls & owners, drag-and-drop 3D floor plan, shop name / hours / notice, QR posters and table cards, reviews, managers. A manager can also be a stall owner: their stalls show first, then the manager section |
 
 The customer pages have no login button; staff use their own address. `owner.html` and
 `admin.html` still work and simply open the staff page.
@@ -62,6 +62,23 @@ Then open [customer site](http://localhost:8000/) or
 Firebase account. Google sign-in on a local address requires that address in
 Firebase Authentication's authorized domains.
 
+### Safe preview mode (practice data)
+
+Add `?preview` to any address to try every page without touching the real shop:
+
+* [customer site](http://localhost:8000/?preview) · [staff site](http://localhost:8000/staff.html?preview)
+  (also works on `https://kimseng-hawker.web.app/?preview`)
+* Data is kept only in that browser; nothing is sent to Firebase. A yellow
+  **PREVIEW** bar is shown at the top. Tap **Exit preview** or add `?preview=off` to leave.
+* Practice logins:
+
+  | Role | Login |
+  |---|---|
+  | Manager | **Continue with Google**, then type `manager@preview.test` |
+  | Owner of stall 1 | `drinks@preview.test` / `preview` |
+  | Owners of stall 2 (two owners, one stall) | `rice@preview.test` / `preview` and `family@preview.test` / `preview` |
+
+
 ## Going live
 
 Follow **[docs/SETUP.md](docs/SETUP.md)** (about 20 minutes, done once).
@@ -75,6 +92,7 @@ owner.html, admin.html               old links, forward to staff.html
 css/style.css                        all styling
 js/config.js                         Firebase project configuration
 js/api.js                            Firestore database + Firebase login
+js/preview.js                        practice data for ?preview mode (browser only)
 js/status.js                         open/closed logic (Malaysia time)
 js/floorplan.js                      3D floor plan viewer + editor (three.js)
 js/customer.js, staff.js             page logic
