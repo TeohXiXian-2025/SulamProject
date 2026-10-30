@@ -3,14 +3,15 @@
 // the real Firebase project, and no real Google login is needed.
 // Leave preview with ?preview=off (or the "Exit preview" link in the banner).
 import { DEFAULT_CENTRE, STARTER_STORES } from './seed.js?v=3';
-import { sortStores, sortItems } from './util.js?v=3';
+import { sortStores, sortItems, isOwnerOf, ownerFields } from './util.js?v=3';
 import { art } from './art.js?v=3';
 
 const FLAG = 'kimseng-preview';
-const KEY = 'kimseng-preview-data-v1';
+const KEY = 'kimseng-preview-data-v2';
 const USER_KEY = 'kimseng-preview-user';
 const MANAGER = 'manager@preview.test';
-const OWNERS = { 'drinks@preview.test': 1, 'rice@preview.test': 2 };
+// Stall 2 has two owners to show that a stall can have several logins.
+const OWNERS = { 'drinks@preview.test': [1], 'rice@preview.test': [2], 'family@preview.test': [2] };
 const PASSWORD = 'preview';
 
 // Called by api.js before anything else loads.
@@ -84,11 +85,13 @@ function seed() {
     { label: '1 meat + 2 veg', labelZh: '一肉两菜', price: 7 },
     { label: '2 meat + 1 veg', labelZh: '两肉一菜', price: 9 },
   ] };
-  for (const [email, number] of Object.entries(OWNERS)) {
-    const uid = `owner-${number}`;
+  const owners = {};
+  for (const [email, numbers] of Object.entries(OWNERS)) {
+    const uid = `owner-${email.split('@')[0]}`;
     data.accounts[email] = { password: PASSWORD, uid, verified: true };
-    Object.assign(data.stores[`s${number}`], { ownerUid: uid, ownerEmail: email });
+    for (const n of numbers) (owners[n] ??= []).push({ email, uid });
   }
+  for (const [n, list] of Object.entries(owners)) Object.assign(data.stores[`s${n}`], ownerFields(list));
   data.reviews.s7.demo = { rating: 5, text: 'Chicken is very smooth!', name: 'Ali', createdAt: Date.now() - 86400000 };
   return data;
 }
@@ -140,8 +143,7 @@ export function previewApi() {
   }
   const fail = (code, message) => Object.assign(new Error(message), { code });
   const isAdmin = () => !!user && db.admins?.includes(user.email);
-  const owns = (id) => !!user && (db.stores[id]?.ownerUid === user.uid
-    || (user.verified && !!db.stores[id]?.ownerEmail && db.stores[id].ownerEmail === user.email));
+  const owns = (id) => isOwnerOf(db.stores[id], user);
   const mustAdmin = () => { if (!isAdmin()) throw fail('permission-denied', 'Missing or insufficient permissions.'); };
   const mustOwn = (id) => { if (!isAdmin() && !owns(id)) throw fail('permission-denied', 'Missing or insufficient permissions.'); };
   const storeList = () => sortStores(Object.entries(db.stores).map(([id, s]) => ({ id, ...s })));
@@ -173,7 +175,7 @@ export function previewApi() {
     },
     async createOwnerAccount(email) {
       mustAdmin();
-      if (db.accounts[lower(email)]) throw fail('auth/email-already-in-use', 'Email already in use');
+      if (db.accounts[lower(email)]) return null; // same as the real site: login already exists
       const id = `u-${newId()}`;
       db.accounts[lower(email)] = { password: PASSWORD, uid: id, verified: true };
       persist();
@@ -188,8 +190,7 @@ export function previewApi() {
 
     watchStores: (cb) => watch(storeList, cb),
     watchStore: (id, cb) => watch(() => (db.stores[id] ? { id, ...db.stores[id] } : null), cb),
-    watchOwnedStores: (u, cb) => watch(() => storeList().filter((s) => s.ownerUid === u.uid
-      || (u.verified && s.ownerEmail && s.ownerEmail === u.email)), cb),
+    watchOwnedStores: (u, cb) => watch(() => storeList().filter((s) => isOwnerOf(s, u)), cb),
     async createStore(data) {
       mustAdmin();
       const id = `s-${newId()}`;

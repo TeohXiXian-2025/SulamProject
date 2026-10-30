@@ -5,7 +5,7 @@
 import { getApi, errorText } from './api.js?v=3';
 import { t, pick, pickAlt, langSwitcher, bindLangSwitcher } from './i18n.js?v=3';
 import { centreStatus, storeStatus, statusBox, nowLocal, overrideActive, todayStr } from './status.js?v=3';
-import { $, esc, toast, stars, pic, ICONS, bigIcon, CATEGORIES, categoryColor, fmtPrice } from './util.js?v=3';
+import { $, esc, toast, stars, pic, ICONS, bigIcon, CATEGORIES, categoryColor, fmtPrice, storeOwners, ownerFields, MAX_OWNERS } from './util.js?v=3';
 import { art, storeArt } from './art.js?v=3';
 import { DEFAULT_CENTRE, kimSengLayoutMigration } from './seed.js?v=3';
 import {
@@ -498,18 +498,18 @@ function renderStalls() {
   const body = shell('#/', `
     <a class="btn red big" href="#/stall-edit/new">${ICONS.plus}${t('addStall')}</a>
     <div class="help">${t('stallsHelp')}</div>
-    ${S.all.map((s) => `<div class="card stack ${s.ownerUid || s.ownerEmail ? '' : 'warn'}">
+    ${S.all.map((s) => { const owners = storeOwners(s).map((o) => o.email || o.uid); return `<div class="card stack ${owners.length ? '' : 'warn'}">
       <div class="row" style="flex-wrap:nowrap">
         <span class="plate">${esc(s.number ?? '')}</span>
         <div style="min-width:0"><b style="font-size:1.1rem">${esc(pick(s))}</b> ${pickAlt(s) ? `<span class="muted">${esc(pickAlt(s))}</span>` : ''}
-          <div class="small" style="${s.ownerUid || s.ownerEmail ? 'color:var(--open)' : 'color:#8a5a00;font-weight:700'}">
-            ${s.ownerUid || s.ownerEmail ? `✓ ${esc(t('ownerIs', { x: s.ownerEmail || s.ownerUid }))}` : `! ${t('noOwner')}`}</div></div>
+          <div class="small" style="${owners.length ? 'color:var(--open);overflow-wrap:anywhere' : 'color:#8a5a00;font-weight:700'}">
+            ${owners.length ? `✓ ${esc(t('ownerIs', { x: owners.join(', ') }))}` : `! ${t('noOwner')}`}</div></div>
       </div>
       <div class="grid2">
         <a class="btn" href="#/stall-edit/${encodeURIComponent(s.id)}">${t('edit')}</a>
         <a class="btn" href="#/stall/${encodeURIComponent(s.id)}">${t('menu')}</a>
       </div>
-    </div>`).join('')}`, t('tileStalls'));
+    </div>`; }).join('')}`, t('tileStalls'));
 }
 
 const isGmail = (email) => /@(gmail|googlemail)\.com$/i.test(email || '');
@@ -526,8 +526,7 @@ function renderStallEdit(id) {
   const s = isNew ? null : storeById(id);
   if (!isNew && !s) return go('#/stalls');
   const d = s || { number: nextNumber(), category: 'other', type: 'normal' };
-  let owner = { ownerUid: d.ownerUid || '', ownerEmail: d.ownerEmail || '' };
-  const linked = () => owner.ownerUid || owner.ownerEmail;
+  let owners = storeOwners(d);
   const body = shell('#/stalls', `<form class="stack" id="sf">
     <div class="card stack">
       <div class="card-title">${t('step1')}</div>
@@ -543,13 +542,9 @@ function renderStallEdit(id) {
     </div>
     <div class="card stack">
       <div class="card-title">${t('step2')}</div>
-      <div id="owner-linked" class="stack ${linked() ? '' : 'hidden'}">
-        <div style="color:var(--open);font-weight:700;overflow-wrap:anywhere">✓ ${esc(t('ownerLinked', { x: d.ownerEmail || d.ownerUid || '' }))}</div>
-        ${d.ownerEmail && !isGmail(d.ownerEmail) ? `<button type="button" class="btn sm" id="resend">${t('sendSetPw')}</button>` : ''}
-        <button type="button" class="btn sm danger" id="unlink">${t('removeOwner')}</button>
-      </div>
-      <div id="owner-new" class="stack ${linked() ? 'hidden' : ''}">
-        <div class="notice">${t('noOwnerYet')}</div>
+      <div id="owner-list" class="stack"></div>
+      <div id="owner-new" class="stack">
+        <div class="notice" id="owner-prompt"></div>
         <input type="email" name="oemail" placeholder="${esc(t('ownerEmail'))}" autocomplete="off">
         <div class="help"><b>${t('gmailHint')}</b><br>${t('otherHint')}</div>
         <details><summary class="help">${t('linkById')}</summary><input type="text" name="ouid" placeholder="Account ID" style="margin-top:6px"></details>
@@ -562,11 +557,23 @@ function renderStallEdit(id) {
     <button type="button" class="btn danger" id="del">${t('deleteStall')}</button></div>`}`,
   isNew ? t('newStall') : t('editStall', { n: d.number }));
 
-  $('#resend', body)?.addEventListener('click', (e) => saving(e.currentTarget, () => api.resetPassword(d.ownerEmail), t('setPwSent')));
-  $('#unlink', body)?.addEventListener('click', () => {
-    owner = { ownerUid: '', ownerEmail: '' };
-    $('#owner-linked', body).classList.add('hidden');
-    $('#owner-new', body).classList.remove('hidden');
+  // One row per owner login; removing only takes effect when Save is pressed.
+  const drawOwners = () => {
+    $('#owner-list', body).innerHTML = owners.map((o, i) => `<div class="stack" style="gap:6px">
+      <div style="color:var(--open);font-weight:700;overflow-wrap:anywhere">✓ ${esc(t('ownerLinked', { x: o.email || o.uid }))}</div>
+      <div class="row">
+        ${o.email && !isGmail(o.email) ? `<button type="button" class="btn sm" data-resend="${i}">${t('sendSetPw')}</button>` : ''}
+        <button type="button" class="btn sm danger" data-unlink="${i}">${t('removeOwner')}</button>
+      </div></div>`).join('');
+    $('#owner-new', body).classList.toggle('hidden', owners.length >= MAX_OWNERS);
+    $('#owner-prompt', body).textContent = owners.length ? `${t('addOwner')} ${t('ownerMax', { n: MAX_OWNERS })}` : t('noOwnerYet');
+  };
+  drawOwners();
+  $('#owner-list', body).addEventListener('click', (e) => {
+    const resend = e.target.closest('[data-resend]');
+    const unlink = e.target.closest('[data-unlink]');
+    if (resend) saving(resend, () => api.resetPassword(owners[resend.dataset.resend].email), t('setPwSent'));
+    if (unlink) { owners = owners.filter((_, i) => i !== Number(unlink.dataset.unlink)); drawOwners(); }
   });
   $('#del', body)?.addEventListener('click', (e) => {
     if (!confirm(t('confirmDeleteStall', { x: `${s.number} ${pick(s)}` }))) return;
@@ -584,15 +591,20 @@ function renderStallEdit(id) {
     };
     let doneMsg = t('saved');
     const ok = await saving(e.submitter, async () => {
-      const oemail = f.get('oemail').trim().toLowerCase();
-      const ouid = f.get('ouid').trim();
-      if (!linked() && ouid) owner = { ownerUid: ouid, ownerEmail: oemail };
-      else if (!linked() && oemail && isGmail(oemail)) owner = { ownerUid: '', ownerEmail: oemail };
-      else if (!linked() && oemail) {
-        owner = { ownerUid: (await api.createOwnerAccount(oemail)) || '', ownerEmail: oemail };
-        doneMsg = t('setPwSent');
+      const oemail = (f.get('oemail') || '').trim().toLowerCase();
+      const ouid = (f.get('ouid') || '').trim();
+      if ((oemail && owners.some((o) => o.email === oemail)) || (ouid && owners.some((o) => o.uid === ouid))) throw new Error(t('ownerDup'));
+      // Work on a copy so a failed save doesn't leave a half-added owner.
+      const next = [...owners];
+      if (next.length < MAX_OWNERS) {
+        if (ouid) next.push({ uid: ouid, email: oemail });
+        else if (oemail && isGmail(oemail)) next.push({ uid: '', email: oemail });
+        else if (oemail) {
+          next.push({ uid: (await api.createOwnerAccount(oemail)) || '', email: oemail });
+          doneMsg = t('setPwSent');
+        }
       }
-      Object.assign(data, owner);
+      Object.assign(data, ownerFields(next));
       if (data.type === 'mixedRice' && !s?.mixedRice) data.mixedRice = { prices: [], note: '' };
       if (isNew) {
         const { findFreeSpot } = await import('./floorplan.js?v=3');

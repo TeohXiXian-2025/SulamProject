@@ -71,6 +71,27 @@ export async function compressImage(file, { maxSide = 640, maxBytes = 90_000 } =
   }
 }
 
+// A stall can have several owner logins. Older stalls keep one owner in
+// ownerUid / ownerEmail; newer ones keep a list in `owners`, plus flat
+// ownerUids / ownerEmails lists that the database rules and lookups use.
+export const MAX_OWNERS = 5;
+export function storeOwners(s) {
+  const list = (Array.isArray(s?.owners) ? s.owners : []).map((o) => ({ email: o.email || '', uid: o.uid || '' }));
+  const old = { email: s?.ownerEmail || '', uid: s?.ownerUid || '' };
+  if ((old.email || old.uid) && !list.some((o) => (old.email && o.email === old.email) || (old.uid && o.uid === old.uid))) list.unshift(old);
+  return list;
+}
+export function ownerFields(list) {
+  return {
+    owners: list,
+    ownerUids: list.map((o) => o.uid).filter(Boolean),
+    ownerEmails: list.map((o) => o.email).filter(Boolean),
+    ownerUid: '', ownerEmail: '',
+  };
+}
+export const isOwnerOf = (s, u) => !!u && storeOwners(s).some((o) =>
+  (o.uid && o.uid === u.uid) || (u.verified && o.email && o.email === u.email));
+
 export function sortStores(list) {
   return [...list].sort((a, b) => (a.number ?? 999) - (b.number ?? 999));
 }
