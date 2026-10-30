@@ -273,6 +273,14 @@ function renderStore() {
     </div>
   </div>`;
   if (draftText != null && $('#rv-text')) $('#rv-text').value = draftText;
+  // Scroll to the section without changing the #/store/... address, which
+  // would otherwise be read as a different page.
+  page.querySelectorAll('.anchor-pill').forEach((a) => a.addEventListener('click', (e) => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (!target) return;
+    window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - 12, behavior: 'smooth' });
+  }));
   bindReviews(s);
 }
 
