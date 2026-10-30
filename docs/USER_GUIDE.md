@@ -32,6 +32,7 @@ Scan the QR code on the poster or table, or open `https://kimseng-hawker.web.app
   * for the **economy mixed rice** stall: a **price guide** (e.g. 1 meat + 2 veg) and "dishes usually cooked" — only an estimate, check at the stall;
   * **Where is it? · 在哪里** — opens the map with a red pin on the stall;
   * **Call stall** (if the stall gave a phone number) and **Opening hours · 营业时间**;
+  * the buttons **Menu · 菜单 / Opening hours · 营业时间 / Reviews · 评价** under the stall name jump straight to that part of the page. 点这些按钮直接跳到那一部分。
   * **Reviews · 评价** — tap **Write a review**, sign in with Google, choose the stars and write a few words. One review per person per stall; you can change or delete it.
 * **Map · 地图** (bottom bar) — 3D floor plan. Green blocks are open, grey are closed. Tap a stall to see the pin and a **Menu** button.
   Drag with one finger to turn the view, pinch to zoom.
@@ -70,6 +71,14 @@ Below are 4 tiles · 下面有 4 个格子:
 
 Every screen has a big **Back · 返回** button at the top left.
 
+**More than one stall, or sharing a stall · 多个档口 / 共用档口**
+
+* If you own **several stalls**, each stall has its own card and buttons on the home screen, one under another,
+  and the side menu lists every stall (e.g. "1 · Beverage", "3 · Pau"). 拥有几个档口的档主，主页会一个接一个显示每个档口。
+* A stall can have **up to 5 owners** (e.g. husband, wife, helper), each with their own login. They all see the same stall
+  and any change by one shows for everyone at once. 一个档口最多 5 位档主，各用自己的登录，看到的是同一个档口。
+* Only the manager can add or remove owners. 只有管理员可以添加或移除档主。
+
 ---
 
 ## Manager 管理员
@@ -81,12 +90,20 @@ The top card shows if the kopitiam is open, how many stalls are open, and a big
 
 | Tile · 格子 | What it does · 做什么 |
 |---|---|
-| **Stalls & owners · 档口和档主** | **Add a stall**. **Edit**: number, name, type, mixed-rice tick box, **owner's email** (Gmail → Google login; other email → they get a set-password email). **Remove owner** stops their access at once. **Delete** is inside Edit and asks twice. **Menu** lets you update a stall for its owner. |
+| **Stalls & owners · 档口和档主** | **Add a stall**. **Edit**: number, name, type, mixed-rice tick box, **owners' emails** — up to 5 per stall, add one at a time and press **Save** (Gmail → Google login; other email → they get a set-password email). **Remove owner** next to an email, then **Save**, stops that person's access. **Delete** is inside Edit and asks twice. **Menu** lets you update a stall for its owner. |
 | **Floor plan · 平面图** | Drag blocks with your finger. Tap one → Turn / Wider / Narrower / Longer / Shorter / Remove. Add tables, entrance, toilet, wall, pillar, sink. Press **Save floor plan**. |
 | **Name, hours & notice · 名称时间公告** | Shop name (金城茶餐室 / Restoran Kim Seng), yellow notice for customers, kopitiam open/close and opening hours. |
 | **Print QR codes · 打印二维码** | Big poster, table cards (with table numbers) or stall cards (opens that stall's menu). Tap **Print**. |
 | **Reviews · 评价** | All reviews, newest first. **Remove** rude or fake ones. |
 | **Managers · 管理员** | Gmail accounts allowed to manage. The last one cannot be removed. |
+
+**Manager who also runs a stall · 管理员自己也有档口:** add your own email as an owner of that stall.
+Your home screen then shows your stall(s) first, and the **Manager** section below.
+管理员把自己的电邮加为档主，主页上方会先显示自己的档口，下面是管理员部分。
+
+**Practice first · 先练习:** add `?preview` to the address (e.g. `https://kimseng-hawker.web.app/staff?preview`)
+to try everything with practice data — nothing real is changed. Tap **Exit preview** to go back.
+在网址后加 `?preview` 可以用练习资料试用，不会改到真的资料。
 
 Changing the shop name changes the website at once and posters printed **after** that.
 Posters already printed keep working — the QR code only contains the website address.
