@@ -116,23 +116,19 @@ async function firebaseApi(config) {
 
     watchStores: (cb) => F.onSnapshot(storesCol, (snap) => cb(sortStores(snap.docs.map(withId))), onErr),
     watchStore: (id, cb) => F.onSnapshot(F.doc(db, 'stores', id), (snap) => cb(snap.exists() ? withId(snap) : null), onErr),
+    // Stalls this login owns, by account id or verified email, in the older
+    // single owner fields and in the owner lists. Waits for every lookup so
+    // an owner never briefly sees "no stall".
     watchOwnedStores: (u, cb) => {
-      // Wait for both lookups so an owner never briefly sees "no stall".
-      let byUid = null;
-      let byEmail = u.verified && u.email ? null : [];
+      const conds = [F.where('ownerUid', '==', u.uid), F.where('ownerUids', 'array-contains', u.uid)];
+      if (u.verified && u.email) conds.push(F.where('ownerEmail', '==', u.email), F.where('ownerEmails', 'array-contains', u.email));
+      const found = conds.map(() => null);
       const emit = () => {
-        if (!byUid || !byEmail) return;
-        const seen = new Set();
-        const merged = [...byUid, ...byEmail].filter((s) => !seen.has(s.id) && seen.add(s.id));
-        cb(sortStores(merged));
+        if (found.includes(null)) return;
+        cb(sortStores([...new Map(found.flat().map((s) => [s.id, s])).values()]));
       };
-      const un1 = F.onSnapshot(F.query(storesCol, F.where('ownerUid', '==', u.uid)), (snap) => {
-        byUid = snap.docs.map(withId); emit();
-      }, onErr);
-      const un2 = u.verified && u.email ? F.onSnapshot(F.query(storesCol, F.where('ownerEmail', '==', u.email)), (snap) => {
-        byEmail = snap.docs.map(withId); emit();
-      }, onErr) : () => {};
-      return () => { un1(); un2(); };
+      const unsubs = conds.map((c, i) => F.onSnapshot(F.query(storesCol, c), (snap) => { found[i] = snap.docs.map(withId); emit(); }, onErr));
+      return () => unsubs.forEach((un) => un());
     },
     createStore: async (data) => (await F.addDoc(storesCol, clean(data))).id,
     updateStore: (id, patch) => F.updateDoc(F.doc(db, 'stores', id), clean(patch)),

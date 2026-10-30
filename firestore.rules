@@ -23,13 +23,17 @@ service cloud.firestore {
         && request.auth.token.email.lower() in get(adminDoc()).data.emails;
     }
     // A stall owner is linked by account id, or by a verified email
-    // (Google sign-in emails are always verified).
+    // (Google sign-in emails are always verified). A stall can have several
+    // owners in ownerUids / ownerEmails; older stalls use ownerUid / ownerEmail.
     function owns(store) {
       return signedIn() && (
         store.get('ownerUid', '') == request.auth.uid
-        || (store.get('ownerEmail', '') != ''
-            && request.auth.token.get('email_verified', false) == true
+        || request.auth.uid in store.get('ownerUids', [])
+        || (request.auth.token.get('email_verified', false) == true && (
+          (store.get('ownerEmail', '') != ''
             && store.get('ownerEmail', '') == request.auth.token.get('email', '').lower())
+          || request.auth.token.get('email', '').lower() in store.get('ownerEmails', [])
+        ))
       );
     }
     function ownsStore(storeId) {
