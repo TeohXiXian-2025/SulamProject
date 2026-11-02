@@ -22,10 +22,16 @@ let planLoading = false;
 
 api.watchCentre((c) => { state.centre = c; render(); });
 api.watchStores((s) => { state.stores = s; render(); });
-api.onAuth((u) => { state.user = u; if (route().page === 'store') renderPage(); });
+api.onAuth((u) => {
+  state.user = u;
+  drawAccount();
+  if (route().page === 'store') renderPage();
+});
 window.addEventListener('hashchange', () => { window.scrollTo(0, 0); render(true); });
 window.addEventListener('langchange', () => render(true));
 setInterval(() => render(), 60_000); // opening status depends on the clock
+
+const REVIEW_MAX = 500;
 
 function route() {
   const [page, id] = location.hash.replace(/^#\/?/, '').split('/');
@@ -61,6 +67,7 @@ function render(force = false) {
             </nav>
             <div class="header-status-slot" id="header-status-slot"></div>
             <div class="header-language">${langSwitcher()}</div>
+            <div class="header-account" id="header-account"></div>
           </div>
         </div>
       </header>
@@ -70,6 +77,7 @@ function render(force = false) {
         <a href="#/map" class="${r.page === 'map' ? 'active' : ''}">${ICONS.pin}<span>${t('navMap')}</span></a>
       </nav>`;
     bindLangSwitcher(app);
+    drawAccount();
   }
   if (r.page !== 'store' && state.storeId) leaveStore();
   if (r.page === 'store' && r.id !== state.storeId) enterStore(r.id);
@@ -368,6 +376,50 @@ function mixedRiceHtml(s) {
     </div>`;
 }
 
+// ---------------------------------------------------------------------------
+// Customer account (Google sign-in is only used for reviews)
+// ---------------------------------------------------------------------------
+const PERSON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
+const displayName = (u) => u.name || u.email.split('@')[0];
+
+// Small chip in the top bar, shown only while signed in, so customers can
+// sign out from any page.
+function drawAccount() {
+  const slot = $('#header-account');
+  if (!slot) return;
+  const u = state.user;
+  slot.innerHTML = u ? `<details class="account-menu">
+      <summary aria-label="${esc(t('signedInAs', { x: u.email }))}">${PERSON}<span class="account-name">${esc(displayName(u))}</span></summary>
+      <div class="account-pop">
+        <div class="small muted">${t('signedInAs', { x: '' })}</div>
+        <b style="overflow-wrap:anywhere">${esc(u.email)}</b>
+        <button type="button" class="btn sm" data-signout>${t('signOut')}</button>
+      </div>
+    </details>` : '';
+}
+
+async function signOutCustomer() {
+  try {
+    await api.signOut();
+    toast(t('signedOut'));
+  } catch (err) { toast(errorText(err), 'error'); }
+}
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-signout]')) { signOutCustomer(); return; }
+  // Close the account menu when tapping elsewhere.
+  const menu = document.querySelector('.account-menu[open]');
+  if (menu && !menu.contains(e.target)) menu.open = false;
+});
+
+function starsInput(rating) {
+  return `<div class="star-row">
+    <div class="star-input" role="group" aria-label="Rating">${[1, 2, 3, 4, 5].map((n) =>
+      `<button type="button" data-star="${n}" class="${n <= rating ? 'on' : ''}" aria-label="${n} – ${esc(t('ratingWords')[n - 1])}">★</button>`).join('')}</div>
+    <span class="star-word" id="star-word">${rating ? esc(t('ratingWords')[rating - 1]) : ''}</span>
+  </div>`;
+}
+
 function reviewsHtml() {
   const reviews = state.reviews || [];
   const avg = reviews.length ? reviews.reduce((a, r) => a + r.rating, 0) / reviews.length : 0;
@@ -375,15 +427,14 @@ function reviewsHtml() {
   const rating = state.draftRating || mine?.rating || 0;
   const form = state.user
     ? `<div class="card stack review-form-card">
+        <div class="posting-as small muted">${t('postingAs', { x: `<b>${esc(displayName(state.user))}</b>` })} ·
+          <button type="button" class="link-btn" data-signout>${t('notYou')}</button></div>
         <b>${mine ? t('yourReview') : t('writeReview')}</b>
-        <div class="star-input" role="group" aria-label="Rating">${[1, 2, 3, 4, 5].map((n) =>
-          `<button type="button" data-star="${n}" class="${n <= rating ? 'on' : ''}" aria-label="${n}">★</button>`).join('')}</div>
-        <textarea id="rv-text" maxlength="500" placeholder="Write your review here...">${esc(mine?.text || '')}</textarea>
+        ${starsInput(rating)}
+        <textarea id="rv-text" maxlength="${REVIEW_MAX}" placeholder="${esc(t('reviewPlaceholder'))}">${esc(mine?.text || '')}</textarea>
+        <div class="char-count" id="rv-count" aria-live="polite"></div>
         <button type="button" class="btn red" id="rv-save">${t('submit')}</button>
-        <div class="grid2">
-          ${mine ? `<button type="button" class="btn sm danger" id="rv-del">${t('deleteMyReview')}</button>` : '<span></span>'}
-          <button type="button" class="btn sm" id="rv-out">${t('signOut')}</button>
-        </div>
+        ${mine ? `<button type="button" class="btn sm danger" id="rv-del">${t('deleteMyReview')}</button>` : ''}
       </div>`
     : `<div class="review-signin-card"><button type="button" class="btn red block" id="rv-in">${t('writeReview')}</button></div>`;
   return `<div class="section-title">${t('reviews')}</div>
@@ -412,20 +463,34 @@ function bindReviews(s) {
     e.currentTarget.textContent = t('signInToReview');
     api.signInGoogle().catch((err) => toast(errorText(err), 'error'));
   });
-  $('#rv-out')?.addEventListener('click', () => api.signOut());
+  // Stars light up from the first one to the one pointed at or tapped.
+  const mineRating = () => state.reviews?.find((r) => r.id === state.user?.uid)?.rating || 0;
+  const showStars = (n) => {
+    document.querySelectorAll('[data-star]').forEach((x) => x.classList.toggle('on', Number(x.dataset.star) <= n));
+    const word = $('#star-word');
+    if (word) word.textContent = n ? t('ratingWords')[n - 1] : '';
+  };
   document.querySelectorAll('[data-star]').forEach((b) => {
-    b.onclick = () => {
-      state.draftRating = Number(b.dataset.star);
-      document.querySelectorAll('[data-star]').forEach((x) => x.classList.toggle('on', Number(x.dataset.star) <= state.draftRating));
-    };
+    b.onclick = () => { state.draftRating = Number(b.dataset.star); showStars(state.draftRating); };
+    b.onpointerenter = (e) => { if (e.pointerType === 'mouse') showStars(Number(b.dataset.star)); };
   });
+  $('.star-input')?.addEventListener('pointerleave', () => showStars(state.draftRating || mineRating()));
+  const text = $('#rv-text');
+  const count = () => {
+    const n = text.value.length;
+    const el = $('#rv-count');
+    el.textContent = `${n} / ${REVIEW_MAX}`;
+    el.classList.toggle('near', n >= REVIEW_MAX - 50 && n < REVIEW_MAX);
+    el.classList.toggle('full', n >= REVIEW_MAX);
+  };
+  if (text) { text.addEventListener('input', count); count(); }
   $('#rv-save')?.addEventListener('click', async (e) => {
     const mine = state.reviews?.find((r) => r.id === state.user.uid);
     const rating = state.draftRating || mine?.rating || 0;
     if (!rating) { toast(t('ratingRequired'), 'error'); return; }
     e.currentTarget.disabled = true;
     try {
-      await api.saveReview(s.id, state.user, { rating, text: $('#rv-text').value.trim().slice(0, 500) });
+      await api.saveReview(s.id, state.user, { rating, text: $('#rv-text').value.trim().slice(0, REVIEW_MAX) });
       state.draftRating = 0;
       toast(t('reviewSaved'));
     } catch (err) {
