@@ -23,6 +23,9 @@ let planLoading = false;
 api.watchCentre((c) => { state.centre = c; render(); });
 api.watchStores((s) => { state.stores = s; render(); });
 api.onAuth((u) => {
+  // Only greet after the customer signs in now, not when a saved login loads.
+  if (u && signingIn) toast(t('signedInAs', { x: displayName(u) }));
+  signingIn = false;
   state.user = u;
   drawAccount();
   if (route().page === 'store') renderPage();
@@ -382,20 +385,45 @@ function mixedRiceHtml(s) {
 const PERSON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
 const displayName = (u) => u.name || u.email.split('@')[0];
 
-// Small chip in the top bar, shown only while signed in, so customers can
-// sign out from any page.
+const GOOGLE_G = '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z" fill="#4285F4"/><path d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z" fill="#34A853"/><path d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1a10 10 0 0 0 0 9.2z" fill="#FBBC05"/><path d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.4L6.4 10c.8-2.3 3-4.1 5.6-4.1z" fill="#EA4335"/></svg>';
+let signingIn = false;
+
+// Profile photo, or the first letter of the name if there is none.
+function avatar(u) {
+  const letter = `<span class="avatar letter">${esc(displayName(u).charAt(0).toUpperCase())}</span>`;
+  return u.photo
+    ? `<img class="avatar" src="${esc(u.photo)}" alt="" referrerpolicy="no-referrer" onerror="this.outerHTML=this.dataset.fallback" data-fallback="${esc(letter)}">`
+    : letter;
+}
+
+// Top-right account button on every customer page: "Sign in" when signed
+// out, the customer's photo and name when signed in.
 function drawAccount() {
   const slot = $('#header-account');
   if (!slot) return;
   const u = state.user;
   slot.innerHTML = u ? `<details class="account-menu">
-      <summary aria-label="${esc(t('signedInAs', { x: u.email }))}">${PERSON}<span class="account-name">${esc(displayName(u))}</span></summary>
+      <summary aria-label="${esc(t('signedInAs', { x: u.email }))}">${avatar(u)}<span class="account-name">${esc(displayName(u))}</span></summary>
       <div class="account-pop">
-        <div class="small muted">${t('signedInAs', { x: '' })}</div>
-        <b style="overflow-wrap:anywhere">${esc(u.email)}</b>
+        <div class="row" style="flex-wrap:nowrap;gap:10px">${avatar(u)}
+          <div style="min-width:0"><b style="display:block;overflow-wrap:anywhere">${esc(displayName(u))}</b>
+            <span class="small muted" style="overflow-wrap:anywhere">${esc(u.email)}</span></div></div>
         <button type="button" class="btn sm" data-signout>${t('signOut')}</button>
       </div>
-    </details>` : '';
+    </details>` : `<details class="account-menu">
+      <summary aria-label="${esc(t('signIn'))}"><span class="signin-icon">${PERSON}</span><span class="signin-g">${GOOGLE_G}</span><span class="account-name">${t('signIn')}</span></summary>
+      <div class="account-pop">
+        <b>${t('signInWhy')}</b>
+        <span class="small muted">${t('signInNoNeed')}</span>
+        <button type="button" class="btn google-btn" data-signin style="background:#fff">${GOOGLE_G}<span>${t('continueGoogle')}</span></button>
+      </div>
+    </details>`;
+}
+
+function signInCustomer() {
+  signingIn = true;
+  document.querySelector('.account-menu[open]')?.removeAttribute('open');
+  api.signInGoogle().catch((err) => { signingIn = false; toast(errorText(err), 'error'); });
 }
 
 async function signOutCustomer() {
@@ -407,6 +435,7 @@ async function signOutCustomer() {
 
 document.addEventListener('click', (e) => {
   if (e.target.closest('[data-signout]')) { signOutCustomer(); return; }
+  if (e.target.closest('[data-signin]')) { signInCustomer(); return; }
   // Close the account menu when tapping elsewhere.
   const menu = document.querySelector('.account-menu[open]');
   if (menu && !menu.contains(e.target)) menu.open = false;
@@ -461,7 +490,7 @@ function reviewsHtml() {
 function bindReviews(s) {
   $('#rv-in')?.addEventListener('click', (e) => {
     e.currentTarget.textContent = t('signInToReview');
-    api.signInGoogle().catch((err) => toast(errorText(err), 'error'));
+    signInCustomer();
   });
   // Stars light up from the first one to the one pointed at or tapped.
   const mineRating = () => state.reviews?.find((r) => r.id === state.user?.uid)?.rating || 0;

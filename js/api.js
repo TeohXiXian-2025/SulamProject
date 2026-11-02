@@ -56,7 +56,7 @@ async function firebaseApi(config) {
   const withId = (d) => ({ id: d.id, ...d.data() });
   const millis = (v) => (v?.toMillis ? v.toMillis() : v || Date.now());
   const mapUser = (u) => u && {
-    uid: u.uid, email: lower(u.email), name: u.displayName || '', verified: u.emailVerified,
+    uid: u.uid, email: lower(u.email), name: u.displayName || '', photo: u.photoURL || '', verified: u.emailVerified,
     provider: u.providerData[0]?.providerId,
   };
   const randomPassword = () => Array.from(crypto.getRandomValues(new Uint8Array(18)), (b) => b.toString(16).padStart(2, '0')).join('');
