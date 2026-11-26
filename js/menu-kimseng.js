@@ -11,15 +11,19 @@ export const KIM_SENG_MENU = {
     "code": "1",
     "sizes": [
      {
-      "label": "Hot 热",
+      "label": "Small 小",
       "price": 2.4
      },
      {
-      "label": "Hot big / Cold 热大杯/冻",
-      "price": 3.0
+      "label": "Big 大",
+      "price": 3
      },
      {
-      "label": "Big cup / Takeaway 大杯/打包",
+      "label": "Cold 冷",
+      "price": 3
+     },
+     {
+      "label": "Big cup 大杯",
       "price": 3.6
      }
     ],
@@ -32,15 +36,19 @@ export const KIM_SENG_MENU = {
     "code": "2",
     "sizes": [
      {
-      "label": "Hot 热",
+      "label": "Small 小",
       "price": 2.2
      },
      {
-      "label": "Hot big / Cold 热大杯/冻",
+      "label": "Big 大",
       "price": 2.8
      },
      {
-      "label": "Big cup / Takeaway 大杯/打包",
+      "label": "Cold 冷",
+      "price": 2.8
+     },
+     {
+      "label": "Big cup 大杯",
       "price": 3.5
      }
     ],
@@ -53,15 +61,19 @@ export const KIM_SENG_MENU = {
     "code": "3",
     "sizes": [
      {
-      "label": "Hot 热",
+      "label": "Small 小",
       "price": 2.4
      },
      {
-      "label": "Hot big / Cold 热大杯/冻",
-      "price": 3.0
+      "label": "Big 大",
+      "price": 3
      },
      {
-      "label": "Big cup / Takeaway 大杯/打包",
+      "label": "Cold 冷",
+      "price": 3
+     },
+     {
+      "label": "Big cup 大杯",
       "price": 3.6
      }
     ],
@@ -74,15 +86,19 @@ export const KIM_SENG_MENU = {
     "code": "4",
     "sizes": [
      {
-      "label": "Hot 热",
+      "label": "Small 小",
       "price": 2.2
      },
      {
-      "label": "Hot big / Cold 热大杯/冻",
+      "label": "Big 大",
       "price": 2.8
      },
      {
-      "label": "Big cup / Takeaway 大杯/打包",
+      "label": "Cold 冷",
+      "price": 2.8
+     },
+     {
+      "label": "Big cup 大杯",
       "price": 3.5
      }
     ],
@@ -95,15 +111,19 @@ export const KIM_SENG_MENU = {
     "code": "5",
     "sizes": [
      {
-      "label": "Hot 热",
+      "label": "Small 小",
       "price": 2.4
      },
      {
-      "label": "Hot big / Cold 热大杯/冻",
-      "price": 3.0
+      "label": "Big 大",
+      "price": 3
      },
      {
-      "label": "Big cup / Takeaway 大杯/打包",
+      "label": "Cold 冷",
+      "price": 3
+     },
+     {
+      "label": "Big cup 大杯",
       "price": 3.6
      }
     ],
@@ -116,19 +136,23 @@ export const KIM_SENG_MENU = {
     "code": "6",
     "sizes": [
      {
-      "label": "Hot 热",
-      "price": 3.0
+      "label": "Small 小",
+      "price": 3
      },
      {
-      "label": "Hot big / Cold 热大杯/冻",
-      "price": 4.0
+      "label": "Big 大",
+      "price": 4
      },
      {
-      "label": "Big cup / Takeaway 大杯/打包",
-      "price": 5.0
+      "label": "Cold 冷",
+      "price": 5
+     },
+     {
+      "label": "Big cup 大杯",
+      "price": 5
      }
     ],
-    "price": 3.0
+    "price": 3
    },
    {
     "name": "Nescafe",
@@ -137,19 +161,23 @@ export const KIM_SENG_MENU = {
     "code": "7",
     "sizes": [
      {
-      "label": "Hot 热",
-      "price": 3.0
+      "label": "Small 小",
+      "price": 3
      },
      {
-      "label": "Hot big / Cold 热大杯/冻",
-      "price": 4.0
+      "label": "Big 大",
+      "price": 4
      },
      {
-      "label": "Big cup / Takeaway 大杯/打包",
-      "price": 5.0
+      "label": "Cold 冷",
+      "price": 5
+     },
+     {
+      "label": "Big cup 大杯",
+      "price": 5
      }
     ],
-    "price": 3.0
+    "price": 3
    },
    {
     "name": "White Kopi",
@@ -158,19 +186,23 @@ export const KIM_SENG_MENU = {
     "code": "8",
     "sizes": [
      {
-      "label": "Hot 热",
-      "price": 3.0
+      "label": "Small 小",
+      "price": 4
      },
      {
-      "label": "Hot big / Cold 热大杯/冻",
-      "price": 4.0
+      "label": "Big 大",
+      "price": 4
      },
      {
-      "label": "Big cup / Takeaway 大杯/打包",
-      "price": 5.0
+      "label": "Cold 冷",
+      "price": 5
+     },
+     {
+      "label": "Big cup 大杯",
+      "price": 5
      }
     ],
-    "price": 3.0
+    "price": 4
    },
    {
     "name": "Neslo",
@@ -179,70 +211,58 @@ export const KIM_SENG_MENU = {
     "code": "9",
     "sizes": [
      {
-      "label": "Hot 热",
-      "price": 4.0
-     },
-     {
-      "label": "Hot big / Cold 热大杯/冻",
+      "label": "Small 小",
       "price": 4.5
      },
      {
-      "label": "Big cup / Takeaway 大杯/打包",
-      "price": 5.0
+      "label": "Big 大",
+      "price": 4
+     },
+     {
+      "label": "Cold 冷",
+      "price": 5
+     },
+     {
+      "label": "Big cup 大杯",
+      "price": 5
      }
     ],
-    "price": 4.0
+    "price": 4
    },
    {
     "name": "Green Apple Juice",
     "nameZh": "青苹果汁",
     "section": "果汁 Fresh Juice",
     "code": "10",
-    "sizes": [
-     {
-      "label": "Cold 冻",
-      "price": 5.0
-     },
-     {
-      "label": "Big cup / Takeaway 大杯/打包",
-      "price": 5.0
-     }
-    ],
-    "price": 5.0
+    "price": 5
    },
    {
     "name": "Carrot Juice",
     "nameZh": "红萝卜汁",
     "section": "果汁 Fresh Juice",
     "code": "10",
-    "sizes": [
-     {
-      "label": "Cold 冻",
-      "price": 5.0
-     },
-     {
-      "label": "Big cup / Takeaway 大杯/打包",
-      "price": 5.0
-     }
-    ],
-    "price": 5.0
+    "price": 5
    },
    {
     "name": "Fresh Orange Juice",
     "nameZh": "鲜橙汁",
     "section": "果汁 Fresh Juice",
     "code": "10",
-    "sizes": [
-     {
-      "label": "Cold 冻",
-      "price": 5.0
-     },
-     {
-      "label": "Big cup / Takeaway 大杯/打包",
-      "price": 5.0
-     }
-    ],
-    "price": 5.0
+    "price": 5
+   },
+   {
+    "name": "Orange & Sour Plum",
+    "nameZh": "桔子酸梅",
+    "section": "果汁 Fresh Juice",
+    "code": "10",
+    "price": 5
+   },
+   {
+    "name": "Sand Pear & Sour Plum",
+    "nameZh": "沙梨酸梅",
+    "section": "果汁 Fresh Juice",
+    "code": "10",
+    "price": 5
    },
    {
     "name": "Barli",
@@ -251,11 +271,11 @@ export const KIM_SENG_MENU = {
     "code": "11",
     "sizes": [
      {
-      "label": "Hot 热",
+      "label": "Big 大",
       "price": 2.5
      },
      {
-      "label": "Cold 冻",
+      "label": "Big cup 大杯",
       "price": 3.3
      }
     ],
@@ -268,11 +288,11 @@ export const KIM_SENG_MENU = {
     "code": "12",
     "sizes": [
      {
-      "label": "Hot 热",
+      "label": "Big 大",
       "price": 2.5
      },
      {
-      "label": "Cold 冻",
+      "label": "Big cup 大杯",
       "price": 3.3
      }
     ],
@@ -285,11 +305,11 @@ export const KIM_SENG_MENU = {
     "code": "13",
     "sizes": [
      {
-      "label": "Hot 热",
+      "label": "Big 大",
       "price": 2.8
      },
      {
-      "label": "Cold 冻",
+      "label": "Big cup 大杯",
       "price": 3.3
      }
     ],
@@ -302,11 +322,11 @@ export const KIM_SENG_MENU = {
     "code": "14",
     "sizes": [
      {
-      "label": "Hot 热",
+      "label": "Big 大",
       "price": 2.8
      },
      {
-      "label": "Cold 冻",
+      "label": "Big cup 大杯",
       "price": 3.3
      }
     ],
@@ -319,15 +339,15 @@ export const KIM_SENG_MENU = {
     "code": "15",
     "sizes": [
      {
-      "label": "Hot 热",
-      "price": 3.0
+      "label": "Big 大",
+      "price": 3
      },
      {
-      "label": "Cold 冻",
-      "price": 3.0
+      "label": "Big cup 大杯",
+      "price": 3
      }
     ],
-    "price": 3.0
+    "price": 3
    },
    {
     "name": "Teh Limau",
@@ -336,15 +356,15 @@ export const KIM_SENG_MENU = {
     "code": "16",
     "sizes": [
      {
-      "label": "Hot 热",
-      "price": 3.0
+      "label": "Big 大",
+      "price": 3
      },
      {
-      "label": "Cold 冻",
+      "label": "Big cup 大杯",
       "price": 3.3
      }
     ],
-    "price": 3.0
+    "price": 3
    },
    {
     "name": "Chinese Tea",
@@ -353,43 +373,52 @@ export const KIM_SENG_MENU = {
     "code": "17",
     "sizes": [
      {
-      "label": "Hot 热",
+      "label": "Big 大",
       "price": 0.8
      },
      {
-      "label": "Cold 冻",
+      "label": "Big cup 大杯",
       "price": 1.2
      }
     ],
     "price": 0.8
    },
    {
-    "name": "My Roti",
+    "name": "Hainan Bread (My Roti)",
     "nameZh": "海南面包",
     "section": "早餐 Breakfast",
-    "code": "18",
-    "price": 3.0
+    "code": "18"
    },
    {
     "name": "My Egg",
     "nameZh": "生熟蛋",
     "section": "早餐 Breakfast",
     "code": "19",
-    "price": 2.8
+    "price": 3
    },
    {
     "name": "Mineral Water",
     "nameZh": "矿泉水",
     "section": "瓶装/罐装 Bottled & Canned",
     "code": "20",
-    "price": 1.2
+    "price": 1.2,
+    "sizes": [
+     {
+      "label": "Small 小",
+      "price": 1.2
+     },
+     {
+      "label": "Big 大",
+      "price": 2.8
+     }
+    ]
    },
    {
     "name": "Gas Water",
     "nameZh": "汽水",
     "section": "瓶装/罐装 Bottled & Canned",
     "code": "21",
-    "price": 3.0
+    "price": 3
    },
    {
     "name": "Classic Coffee",
@@ -649,7 +678,8 @@ export const KIM_SENG_MENU = {
     "labelZh": "二肉一菜",
     "price": 11.7
    }
-  ]
+  ],
+  "note": "Priced per scoop: 1 scoop of meat = 1 Meat, 1 scoop of vege = 1 Vege. 一勺/份量肉 = 一肉，一勺/份量菜 = 一菜。"
  },
  "3": {
   "items": [
@@ -1494,6 +1524,28 @@ export const KIM_SENG_MENU = {
     "price": 10.0
    },
    {
+    "name": "Pan-Fried Dumplings (10 pcs)",
+    "nameZh": "煎饺子 (10粒)",
+    "section": "饺子 Dumplings",
+    "price": 11
+   },
+   {
+    "name": "Dry Rice Noodle with Dumplings",
+    "nameZh": "干捞米线饺子",
+    "section": "米线/面 Rice Noodle",
+    "sizes": [
+     {
+      "label": "Small 小",
+      "price": 9
+     },
+     {
+      "label": "Big 大",
+      "price": 10
+     }
+    ],
+    "price": 9
+   },
+   {
     "name": "Pan-Fried Dumpling Rice Noodle",
     "nameZh": "煎饺子米线",
     "section": "米线/面 Rice Noodle",
@@ -1513,11 +1565,21 @@ export const KIM_SENG_MENU = {
     "name": "Mala Spicy Soup",
     "nameZh": "麻辣汤",
     "section": "汤类 Soup",
-    "price": 10.0
+    "price": 11,
+    "sizes": [
+     {
+      "label": "Small 小",
+      "price": 11
+     },
+     {
+      "label": "Big 大",
+      "price": 12
+     }
+    ]
    },
    {
     "name": "Sour Beans Minced Pork",
-    "nameZh": "酸豆肉碎",
+    "nameZh": "酸豆肉沫",
     "section": "米线/面 Rice Noodle",
     "sizes": [
      {
@@ -1529,11 +1591,12 @@ export const KIM_SENG_MENU = {
       "price": 11.0
      }
     ],
-    "price": 10.0
+    "price": 10.0,
+    "was": "酸豆肉碎"
    },
    {
-    "name": "Spicy Chicken Noodle",
-    "nameZh": "辣子鸡面 / 辣子鸡",
+    "name": "Spicy Chicken Rice Noodle",
+    "nameZh": "辣子鸡米线",
     "section": "米线/面 Rice Noodle",
     "sizes": [
      {
@@ -1545,7 +1608,8 @@ export const KIM_SENG_MENU = {
       "price": 11.0
      }
     ],
-    "price": 10.0
+    "price": 10.0,
+    "was": "辣子鸡面 / 辣子鸡"
    },
    {
     "name": "Minced Pork Dry Rice Noodle",
@@ -1564,8 +1628,8 @@ export const KIM_SENG_MENU = {
     "price": 10.0
    },
    {
-    "name": "Lao Cai",
-    "nameZh": "老菜",
+    "name": "Pickled Vegetable (Pao Cai)",
+    "nameZh": "泡菜",
     "section": "米线/面 Rice Noodle",
     "sizes": [
      {
@@ -1577,7 +1641,8 @@ export const KIM_SENG_MENU = {
       "price": 12.0
      }
     ],
-    "price": 11.0
+    "price": 11.0,
+    "was": "老菜"
    },
    {
     "name": "Pork Ribs",
@@ -2141,91 +2206,24 @@ export const KIM_SENG_MENU = {
     "price": 9.0
    },
    {
-    "name": "Yee Mee",
-    "nameZh": "伊面",
-    "section": "面类 Noodle",
-    "sizes": [
-     {
-      "label": "Small 小",
-      "price": 10.0
-     },
-     {
-      "label": "Big 大",
-      "price": 11.0
-     }
-    ],
-    "price": 10.0
-   },
-   {
-    "name": "Mee Hoon",
-    "nameZh": "米粉",
-    "section": "面类 Noodle",
-    "sizes": [
-     {
-      "label": "Small 小",
-      "price": 10.0
-     },
-     {
-      "label": "Big 大",
-      "price": 11.0
-     }
-    ],
-    "price": 10.0
-   },
-   {
-    "name": "Hor Fun",
-    "nameZh": "河粉",
-    "section": "面类 Noodle",
-    "sizes": [
-     {
-      "label": "Small 小",
-      "price": 10.0
-     },
-     {
-      "label": "Big 大",
-      "price": 11.0
-     }
-    ],
-    "price": 10.0
-   },
-   {
-    "name": "Vits-Mee",
-    "nameZh": "唯一面",
-    "section": "面类 Noodle",
-    "sizes": [
-     {
-      "label": "Small 小",
-      "price": 10.0
-     },
-     {
-      "label": "Big 大",
-      "price": 11.0
-     }
-    ],
-    "price": 10.0
-   },
-   {
     "name": "Braised Pork Trotter / Rice",
     "nameZh": "卤猪脚/饭",
     "section": "饭类/卤味 Rice & Braised",
-    "price": 18.0
+    "price": 18.0,
+    "description": "Sunday only 星期日"
    },
    {
     "name": "Braised Chicken Feet / Rice",
     "nameZh": "卤鸡脚/饭",
-    "section": "饭类/卤味 Rice & Braised"
-   },
-   {
-    "name": "Glutinous Rice",
-    "nameZh": "糯米饭",
     "section": "饭类/卤味 Rice & Braised",
-    "price": 5.5
+    "description": "Saturday only 星期六"
    },
    {
-    "name": "Daily Dessert Soup (Mon–Sat)",
+    "name": "Dessert Soup",
     "nameZh": "每日糖水",
     "section": "糖水 Dessert",
-    "price": 3.0
+    "price": 3.0,
+    "description": "Sunday 星期日"
    },
    {
     "name": "Old Cucumber Soup + Rice (Monday)",
@@ -2244,7 +2242,7 @@ export const KIM_SENG_MENU = {
     "price": 10.0
    },
    {
-    "name": "Watercress Soup + Rice",
+    "name": "Watercress Soup + Rice (Friday)",
     "nameZh": "西洋菜汤+饭",
     "section": "汤+饭 Soup + Rice",
     "sizes": [
@@ -2274,6 +2272,41 @@ export const KIM_SENG_MENU = {
      }
     ],
     "price": 10.0
+   },
+   {
+    "name": "Yee Mee",
+    "nameZh": "伊面",
+    "section": "每日特价 Daily Special",
+    "price": 3,
+    "description": "Tuesday 星期二"
+   },
+   {
+    "name": "Mee Hoon",
+    "nameZh": "米粉",
+    "section": "每日特价 Daily Special",
+    "price": 3,
+    "description": "Wednesday & Saturday 星期三、六"
+   },
+   {
+    "name": "Hor Fun",
+    "nameZh": "河粉",
+    "section": "每日特价 Daily Special",
+    "price": 3,
+    "description": "Thursday 星期四"
+   },
+   {
+    "name": "Vits-Mee",
+    "nameZh": "唯一面",
+    "section": "每日特价 Daily Special",
+    "price": 3,
+    "description": "Friday 星期五"
+   },
+   {
+    "name": "Glutinous Rice",
+    "nameZh": "糯米饭",
+    "section": "每日特价 Daily Special",
+    "price": 5.5,
+    "description": "Monday 星期一"
    }
   ],
   "prices": []
@@ -2390,14 +2423,14 @@ export const KIM_SENG_MENU = {
     "sizes": [
      {
       "label": "Small 小",
-      "price": 10.0
+      "price": 9
      },
      {
       "label": "Big 大",
-      "price": 11.0
+      "price": 10
      }
     ],
-    "price": 10.0
+    "price": 9
    },
    {
     "name": "Prawn + Fish Ball Curry Mee",
@@ -2455,14 +2488,34 @@ export const KIM_SENG_MENU = {
     "nameZh": "酒香海鲜汤",
     "section": "酒香/清汤 Soup & Mee Hoon",
     "code": "11",
-    "price": 12.0
+    "price": 10,
+    "sizes": [
+     {
+      "label": "Small 小",
+      "price": 10
+     },
+     {
+      "label": "Big 大",
+      "price": 11
+     }
+    ]
    },
    {
     "name": "Fish Ball Noodle Soup",
     "nameZh": "清汤鱼丸粉",
     "section": "酒香/清汤 Soup & Mee Hoon",
     "code": "12",
-    "price": 10.0
+    "price": 8,
+    "sizes": [
+     {
+      "label": "Small 小",
+      "price": 8
+     },
+     {
+      "label": "Big 大",
+      "price": 9
+     }
+    ]
    },
    {
     "name": "Drunken Seafood Mee Hoon",
@@ -2477,7 +2530,8 @@ export const KIM_SENG_MENU = {
    {
     "name": "Roast Pork Clam Curry Noodle",
     "nameZh": "烧肉蛤蜊咖喱面",
-    "section": "咖喱面 Curry Mee"
+    "section": "咖喱面 Curry Mee",
+    "price": 12
    },
    {
     "name": "Curry Chee Cheong Fun",
@@ -2489,3 +2543,6 @@ export const KIM_SENG_MENU = {
   "prices": []
  }
 };
+
+// Raised when the data is corrected after stalls already loaded it (`was` = old Chinese name).
+export const KIM_SENG_MENU_VERSION = 2;

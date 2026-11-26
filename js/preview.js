@@ -7,7 +7,7 @@ import { sortStores, sortItems, isOwnerOf, ownerFields } from './util.js?v=3';
 import { KIM_SENG_MENU } from './menu-kimseng.js?v=3';
 
 const FLAG = 'kimseng-preview';
-const KEY = 'kimseng-preview-data-v3';
+const KEY = 'kimseng-preview-data-v4';
 const USER_KEY = 'kimseng-preview-user';
 const MANAGER = 'manager@preview.test';
 // Stall 2 has two owners to show that a stall can have several logins.
@@ -40,7 +40,7 @@ function seed() {
     (KIM_SENG_MENU[s.number]?.items || []).forEach((it, i) => { data.items[id][`i${s.number}-${i}`] = { ...it, available: true, createdAt: i }; });
     data.reviews[id] = {};
   }
-  data.stores.s2.mixedRice = { note: '', prices: KIM_SENG_MENU[2].prices };
+  data.stores.s2.mixedRice = { note: KIM_SENG_MENU[2].note, prices: KIM_SENG_MENU[2].prices };
   const owners = {};
   for (const [email, numbers] of Object.entries(OWNERS)) {
     const uid = `owner-${email.split('@')[0]}`;
