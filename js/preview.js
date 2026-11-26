@@ -7,7 +7,7 @@ import { sortStores, sortItems, isOwnerOf, ownerFields } from './util.js?v=3';
 import { KIM_SENG_MENU } from './menu-kimseng.js?v=3';
 
 const FLAG = 'kimseng-preview';
-const KEY = 'kimseng-preview-data-v4';
+const KEY = 'kimseng-preview-data-v5';
 const USER_KEY = 'kimseng-preview-user';
 const MANAGER = 'manager@preview.test';
 // Stall 2 has two owners to show that a stall can have several logins.

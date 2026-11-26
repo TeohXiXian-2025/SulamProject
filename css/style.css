@@ -1576,3 +1576,6 @@ dialog form { padding: 24px; max-height: 88vh; overflow-y: auto; }
 .dish-sizes > span { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .dish-sizes .price { white-space: nowrap; font-size: 1rem; }
 .size-row { display: grid; grid-template-columns: minmax(0, 1fr) 96px auto; gap: 6px; align-items: center; }
+.dish-days { font-size: 0.85rem; font-weight: 700; color: var(--jade); }
+.day-picks { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.day-picks .check { min-height: 36px; }

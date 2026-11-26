@@ -1,6 +1,6 @@
 // Form building blocks for the staff pages (stall owners and the manager).
 import { t, pick, pickAlt, getLang } from './i18n.js?v=3';
-import { todayStr, addDays, overrideActive } from './status.js?v=3';
+import { todayStr, addDays, overrideActive, nowLocal } from './status.js?v=3';
 import { $, esc, toast, compressImage, fmtPrice, pic } from './util.js?v=3';
 import { errorText } from './api.js?v=3';
 import { art } from './art.js?v=3';
@@ -205,6 +205,10 @@ export function sizesHtml(it) {
   return it.sizes?.length ? `<div class="dish-sizes">${it.sizes.map((x) =>
     `<span><span>${esc(x.label)}</span><b class="price">${fmtPrice(x.price)}</b></span>`).join('')}</div>` : '';
 }
+// Dishes sold only on some days keep `days` (0 = Sunday … 6 = Saturday, Malaysia
+// time); no `days` means every day.
+export const soldToday = (it) => !it.days?.length || it.days.includes(nowLocal().day);
+export const daysText = (it) => (it.days?.length ? t('onlyOn', { d: it.days.map((d) => t('days')[d]).join(', ') }) : '');
 const sizeRow = (s = {}) => `<div class="size-row">
   <input type="text" data-size-label maxlength="40" placeholder="${esc(t('sizeName'))}" value="${esc(s.label || '')}">
   <input type="number" data-size-price min="0" step="0.1" inputmode="decimal" placeholder="RM" value="${esc(s.price ?? '')}">
@@ -236,6 +240,9 @@ export function openItemDialog({ item, mixedRice, onSave }) {
         <label class="field"><span>${t('dishCode')}</span><input type="text" name="code" maxlength="8" value="${esc(it.code || '')}"></label>
       </div>`}
       <label class="field"><span>${t('description')}</span><input type="text" name="description" maxlength="150" value="${esc(it.description || '')}"></label>
+      <div class="field"><span>${t('soldOnDays')}</span>
+        <div class="day-picks">${[1, 2, 3, 4, 5, 6, 0].map((d) => `<label class="check"><input type="checkbox" name="day" value="${d}" ${!it.days?.length || it.days.includes(d) ? 'checked' : ''}><span>${t('days')[d]}</span></label>`).join('')}</div>
+        <div class="help">${t('soldOnDaysHelp')}</div></div>
       <div class="grid2">
         <button type="button" class="btn" data-close>${t('cancel')}</button>
         <button type="submit" class="btn green">${t('save')}</button>
@@ -278,6 +285,8 @@ export function openItemDialog({ item, mixedRice, onSave }) {
         data.section = f.get('section').trim();
         data.code = f.get('code').trim();
       }
+      const days = f.getAll('day').map(Number).sort();
+      data.days = days.length === 7 || !days.length ? [] : days;
       if (!item) data.available = true;
       const ok = await saving(form.querySelector('[type=submit]'), () => onSave(data));
       if (ok) dlg.close();
@@ -294,6 +303,7 @@ export function itemCardHtml(it) {
         <div style="font-weight:900;font-size:1.1rem;line-height:1.3">${it.code ? `<span class="dish-code">${esc(it.code)}</span> ` : ''}${esc(pick(it))} ${pickAlt(it) ? `<span class="muted" style="font-weight:500">${esc(pickAlt(it))}</span>` : ''}</div>
         ${it.sizes?.length ? sizesHtml(it) : priceText(it) ? `<div class="price">${esc(priceText(it))}</div>` : `<div class="small muted">${t('noPriceYet')}</div>`}
         ${it.kind ? `<div class="small muted">${t(`kind_${it.kind}`)}</div>` : ''}
+        ${daysText(it) ? `<div class="small" style="color:var(--jade);font-weight:700">${esc(daysText(it))}</div>` : ''}
       </div>
     </div>
     <button type="button" class="avail ${sold ? 'no' : 'yes'}" data-avail>${sold ? t('soldOutBtn') : t('availableBtn')}</button>

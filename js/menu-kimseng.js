@@ -424,36 +424,86 @@ export const KIM_SENG_MENU = {
     "name": "Classic Coffee",
     "nameZh": "经典咖啡",
     "section": "冷藏袋装饮品 Chilled Packs (250ml)",
-    "price": 6.0,
-    "description": "3 packs RM 15 · Shopee: 1 bottle RM 9 / 3 bottles RM 20"
+    "price": 6,
+    "description": "Shopee: 1 bottle RM 9 / 3 bottles RM 20",
+    "sizes": [
+     {
+      "label": "1 pack 1包",
+      "price": 6
+     },
+     {
+      "label": "3 packs 3包",
+      "price": 15
+     }
+    ]
    },
    {
     "name": "Rich Coffee",
     "nameZh": "浓郁咖啡",
     "section": "冷藏袋装饮品 Chilled Packs (250ml)",
-    "price": 6.0,
-    "description": "3 packs RM 15 · Shopee: 1 bottle RM 9 / 3 bottles RM 20"
+    "price": 6,
+    "description": "Shopee: 1 bottle RM 9 / 3 bottles RM 20",
+    "sizes": [
+     {
+      "label": "1 pack 1包",
+      "price": 6
+     },
+     {
+      "label": "3 packs 3包",
+      "price": 15
+     }
+    ]
    },
    {
     "name": "Hazelnut Latte",
     "nameZh": "榛果拿铁",
     "section": "冷藏袋装饮品 Chilled Packs (250ml)",
-    "price": 6.0,
-    "description": "3 packs RM 15 · Shopee: 1 bottle RM 9 / 3 bottles RM 20"
+    "price": 6,
+    "description": "Shopee: 1 bottle RM 9 / 3 bottles RM 20",
+    "sizes": [
+     {
+      "label": "1 pack 1包",
+      "price": 6
+     },
+     {
+      "label": "3 packs 3包",
+      "price": 15
+     }
+    ]
    },
    {
     "name": "Caramel Latte",
     "nameZh": "焦糖拿铁",
     "section": "冷藏袋装饮品 Chilled Packs (250ml)",
-    "price": 6.0,
-    "description": "3 packs RM 15 · Shopee: 1 bottle RM 9 / 3 bottles RM 20"
+    "price": 6,
+    "description": "Shopee: 1 bottle RM 9 / 3 bottles RM 20",
+    "sizes": [
+     {
+      "label": "1 pack 1包",
+      "price": 6
+     },
+     {
+      "label": "3 packs 3包",
+      "price": 15
+     }
+    ]
    },
    {
     "name": "Milk Tea",
     "nameZh": "奶茶",
     "section": "冷藏袋装饮品 Chilled Packs (250ml)",
-    "price": 6.0,
-    "description": "3 packs RM 15 · Shopee: 1 bottle RM 9 / 3 bottles RM 20"
+    "price": 6,
+    "description": "Shopee: 1 bottle RM 9 / 3 bottles RM 20",
+    "sizes": [
+     {
+      "label": "1 pack 1包",
+      "price": 6
+     },
+     {
+      "label": "3 packs 3包",
+      "price": 15
+     }
+    ]
    }
   ],
   "prices": []
@@ -669,14 +719,14 @@ export const KIM_SENG_MENU = {
     "price": 8.8
    },
    {
-    "label": "2 Meat",
-    "labelZh": "二肉",
-    "price": 10.3
-   },
-   {
     "label": "2 Meat + 1 Vege",
     "labelZh": "二肉一菜",
     "price": 11.7
+   },
+   {
+    "label": "2 Meat",
+    "labelZh": "二肉",
+    "price": 10.3
    }
   ],
   "note": "Priced per scoop: 1 scoop of meat = 1 Meat, 1 scoop of vege = 1 Vege. 一勺/份量肉 = 一肉，一勺/份量菜 = 一菜。"
@@ -2210,23 +2260,29 @@ export const KIM_SENG_MENU = {
     "nameZh": "卤猪脚/饭",
     "section": "饭类/卤味 Rice & Braised",
     "price": 18.0,
-    "description": "Sunday only 星期日"
+    "days": [
+     0
+    ]
    },
    {
     "name": "Braised Chicken Feet / Rice",
     "nameZh": "卤鸡脚/饭",
     "section": "饭类/卤味 Rice & Braised",
-    "description": "Saturday only 星期六"
+    "days": [
+     6
+    ]
    },
    {
     "name": "Dessert Soup",
     "nameZh": "每日糖水",
     "section": "糖水 Dessert",
     "price": 3.0,
-    "description": "Sunday 星期日"
+    "days": [
+     0
+    ]
    },
    {
-    "name": "Old Cucumber Soup + Rice (Monday)",
+    "name": "Old Cucumber Soup + Rice",
     "nameZh": "老黄瓜汤+饭",
     "section": "汤+饭 Soup + Rice",
     "sizes": [
@@ -2239,10 +2295,13 @@ export const KIM_SENG_MENU = {
       "price": 11.0
      }
     ],
-    "price": 10.0
+    "price": 10.0,
+    "days": [
+     1
+    ]
    },
    {
-    "name": "Watercress Soup + Rice (Friday)",
+    "name": "Watercress Soup + Rice",
     "nameZh": "西洋菜汤+饭",
     "section": "汤+饭 Soup + Rice",
     "sizes": [
@@ -2255,10 +2314,13 @@ export const KIM_SENG_MENU = {
       "price": 11.0
      }
     ],
-    "price": 10.0
+    "price": 10.0,
+    "days": [
+     5
+    ]
    },
    {
-    "name": "Lotus Root Soup + Rice (Thursday)",
+    "name": "Lotus Root Soup + Rice",
     "nameZh": "莲藕汤+饭",
     "section": "汤+饭 Soup + Rice",
     "sizes": [
@@ -2271,42 +2333,56 @@ export const KIM_SENG_MENU = {
       "price": 11.0
      }
     ],
-    "price": 10.0
+    "price": 10.0,
+    "days": [
+     4
+    ]
    },
    {
     "name": "Yee Mee",
     "nameZh": "伊面",
     "section": "每日特价 Daily Special",
     "price": 3,
-    "description": "Tuesday 星期二"
+    "days": [
+     2
+    ]
    },
    {
     "name": "Mee Hoon",
     "nameZh": "米粉",
     "section": "每日特价 Daily Special",
     "price": 3,
-    "description": "Wednesday & Saturday 星期三、六"
+    "days": [
+     3,
+     6
+    ]
    },
    {
     "name": "Hor Fun",
     "nameZh": "河粉",
     "section": "每日特价 Daily Special",
     "price": 3,
-    "description": "Thursday 星期四"
+    "days": [
+     4
+    ]
    },
    {
     "name": "Vits-Mee",
     "nameZh": "唯一面",
     "section": "每日特价 Daily Special",
     "price": 3,
-    "description": "Friday 星期五"
+    "days": [
+     5
+    ]
    },
    {
     "name": "Glutinous Rice",
     "nameZh": "糯米饭",
     "section": "每日特价 Daily Special",
     "price": 5.5,
-    "description": "Monday 星期一"
+    "days": [
+     1
+    ]
    }
   ],
   "prices": []
@@ -2545,4 +2621,4 @@ export const KIM_SENG_MENU = {
 };
 
 // Raised when the data is corrected after stalls already loaded it (`was` = old Chinese name).
-export const KIM_SENG_MENU_VERSION = 2;
+export const KIM_SENG_MENU_VERSION = 3;

@@ -5,7 +5,7 @@ import { t, pick, pickAlt, langSwitcher, bindLangSwitcher } from './i18n.js?v=3'
 import { centreStatus, storeStatus, statusPill, statusBox, hoursTable, nowLocal } from './status.js?v=3';
 import { $, esc, fmtPrice, toast, stars, pic, ICONS } from './util.js?v=3';
 import { art, storeArt } from './art.js?v=3';
-import { KINDS, priceText, sizesHtml } from './forms.js?v=3';
+import { KINDS, priceText, sizesHtml, soldToday, daysText } from './forms.js?v=3';
 
 const api = await getApi();
 const app = $('#app');
@@ -296,11 +296,13 @@ function renderStore() {
 }
 
 function dishHtml(it) {
-  const sold = it.available === false;
+  // Not sold today (a day-only dish) looks like sold out, with its own label.
+  const notToday = !soldToday(it);
+  const sold = it.available === false || notToday;
   return `<div class="dish ${sold ? 'sold' : ''}">
     <div class="dish-media">
       ${pic(it.photo || art('dish'))}
-      ${sold ? `<span class="tag-sold">${t('soldOut')}</span>` : ''}
+      ${sold ? `<span class="tag-sold">${notToday ? t('notToday') : t('soldOut')}</span>` : ''}
     </div>
     <div class="info">
       <div class="dish-top-line">
@@ -308,6 +310,7 @@ function dishHtml(it) {
         ${priceText(it) && !it.sizes?.length ? `<span class="price">${esc(priceText(it))}</span>` : ''}
       </div>
       ${pickAlt(it) ? `<div class="muted">${esc(pickAlt(it))}</div>` : ''}
+      ${daysText(it) ? `<div class="dish-days">${esc(daysText(it))}</div>` : ''}
       ${sizesHtml(it)}
       ${it.description ? `<div class="desc">${esc(it.description)}</div>` : ''}
     </div>
