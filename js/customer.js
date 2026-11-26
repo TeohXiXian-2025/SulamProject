@@ -5,7 +5,7 @@ import { t, pick, pickAlt, langSwitcher, bindLangSwitcher } from './i18n.js?v=3'
 import { centreStatus, storeStatus, statusPill, statusBox, hoursTable, nowLocal } from './status.js?v=3';
 import { $, esc, fmtPrice, toast, stars, pic, ICONS } from './util.js?v=3';
 import { art, storeArt } from './art.js?v=3';
-import { KINDS } from './forms.js?v=3';
+import { KINDS, priceText, sizesHtml } from './forms.js?v=3';
 
 const api = await getApi();
 const app = $('#app');
@@ -304,10 +304,11 @@ function dishHtml(it) {
     </div>
     <div class="info">
       <div class="dish-top-line">
-        <span class="fname">${esc(pick(it))}</span>
-        ${it.price != null && it.price !== '' ? `<span class="price">${fmtPrice(it.price)}</span>` : ''}
+        <span class="fname">${it.code ? `<span class="dish-code">${esc(it.code)}</span> ` : ''}${esc(pick(it))}</span>
+        ${priceText(it) && !it.sizes?.length ? `<span class="price">${esc(priceText(it))}</span>` : ''}
       </div>
       ${pickAlt(it) ? `<div class="muted">${esc(pickAlt(it))}</div>` : ''}
+      ${sizesHtml(it)}
       ${it.description ? `<div class="desc">${esc(it.description)}</div>` : ''}
     </div>
   </div>`;
@@ -351,7 +352,7 @@ function mixedRiceHtml(s) {
       <div class="guide-list">
         ${prices.map((p) => `<div class="guide-row">
           <span>${esc(pick(p, 'label'))}${pickAlt(p, 'label') ? ` <span class="muted">${esc(pickAlt(p, 'label'))}</span>` : ''}</span>
-          <span class="price">${fmtPrice(p.price)}</span>
+          <span class="price">${esc(priceText(p))}</span>
         </div>`).join('')}
       </div>
     </div>` : ''}
@@ -372,6 +373,8 @@ function mixedRiceHtml(s) {
               <div class="dish-card-caption">
                 <b>${esc(pick(it))}</b>
                 ${pickAlt(it) ? `<span class="alt">${esc(pickAlt(it))}</span>` : ''}
+                ${priceText(it) ? `<span class="price" style="display:block">${esc(priceText(it))}</span>` : ''}
+                ${it.description ? `<span class="small muted">${esc(it.description)}</span>` : ''}
               </div>
             </div>`).join('')}</div>
         </div>` : '';

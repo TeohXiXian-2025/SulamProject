@@ -1569,3 +1569,10 @@ dialog form { padding: 24px; max-height: 88vh; overflow-y: auto; }
   .dish-media { width: 60px; height: 60px; }
   .tile-grid { grid-template-columns: 1fr; }
 }
+
+/* Dish codes, sizes and size editor */
+.dish-code { display: inline-block; padding: 0 6px; margin-right: 2px; border-radius: 6px; background: #f2ebd9; border: 1px solid var(--line); font-size: 0.78em; font-weight: 800; color: var(--ink-2); vertical-align: 2px; }
+.dish-sizes { display: grid; gap: 2px; margin-top: 4px; font-size: 0.92rem; max-width: 420px; }
+.dish-sizes > span { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.dish-sizes .price { white-space: nowrap; font-size: 1rem; }
+.size-row { display: grid; grid-template-columns: minmax(0, 1fr) 96px auto; gap: 6px; align-items: center; }

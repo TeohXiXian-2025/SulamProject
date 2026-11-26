@@ -192,6 +192,25 @@ export function openDialog(html, bind) {
 // --- Food item dialog ----------------------------------------------------------
 export const KINDS = ['meat', 'fish', 'veg', 'egg', 'other'];
 
+// Price line for a dish or price-guide row: several sizes ("Small RM 10.00 ·
+// Big RM 17.00"), a starting price ("from RM 4.30"), one price, or nothing
+// when the stall has not given a price.
+export function priceText(it) {
+  if (it.sizes?.length) return it.sizes.map((s) => `${s.label} ${fmtPrice(s.price)}`).join(' · ');
+  if (it.price == null || it.price === '') return '';
+  return it.priceFrom ? t('fromPrice', { p: fmtPrice(it.price) }) : fmtPrice(it.price);
+}
+// One line per size: label on the left, price on the right.
+export function sizesHtml(it) {
+  return it.sizes?.length ? `<div class="dish-sizes">${it.sizes.map((x) =>
+    `<span><span>${esc(x.label)}</span><b class="price">${fmtPrice(x.price)}</b></span>`).join('')}</div>` : '';
+}
+const sizeRow = (s = {}) => `<div class="size-row">
+  <input type="text" data-size-label maxlength="40" placeholder="${esc(t('sizeName'))}" value="${esc(s.label || '')}">
+  <input type="number" data-size-price min="0" step="0.1" inputmode="decimal" placeholder="RM" value="${esc(s.price ?? '')}">
+  <button type="button" class="btn sm danger" data-size-del aria-label="${esc(t('delete'))}">✕</button>
+</div>`;
+
 export function openItemDialog({ item, mixedRice, onSave }) {
   const it = item || { available: true, kind: 'meat' };
   openDialog(`
@@ -201,10 +220,21 @@ export function openItemDialog({ item, mixedRice, onSave }) {
       <label class="field"><span>${t('name')} *</span><input type="text" name="name" required maxlength="80" value="${esc(it.name || '')}"></label>
       <label class="field"><span>${t('nameZh')}</span><input type="text" name="nameZh" maxlength="80" value="${esc(it.nameZh || '')}"></label>
       ${mixedRice ? `<label class="field"><span>${t('kind')}</span><select name="kind">${KINDS.map((k) =>
-        `<option value="${k}" ${it.kind === k ? 'selected' : ''}>${t(`kind_${k}`)}</option>`).join('')}</select></label>` : `
-      <label class="field"><span>${t('price')} *</span>
-        <input type="number" name="price" min="0" step="0.1" inputmode="decimal" required value="${esc(it.price ?? '')}"></label>
-      <label class="field"><span>${t('section')}</span><input type="text" name="section" maxlength="40" value="${esc(it.section || '')}" list="sections"></label>`}
+        `<option value="${k}" ${it.kind === k ? 'selected' : ''}>${t(`kind_${k}`)}</option>`).join('')}</select></label>` : ''}
+      <div id="one-price" class="stack ${it.sizes?.length ? 'hidden' : ''}" style="gap:6px">
+        <label class="field"><span>${t('price')}</span>
+          <input type="number" name="price" min="0" step="0.1" inputmode="decimal" value="${esc(it.sizes?.length ? '' : it.price ?? '')}"></label>
+        <label class="check"><input type="checkbox" name="priceFrom" ${it.priceFrom ? 'checked' : ''}><span>${t('priceFromBox')}</span></label>
+      </div>
+      ${mixedRice ? '' : `<div class="stack" style="gap:6px">
+        <div id="sizes" class="stack" style="gap:6px">${(it.sizes || []).map(sizeRow).join('')}</div>
+        <button type="button" class="btn sm" id="add-size">+ ${t('addSize')}</button>
+        <div class="help">${t('sizesHelp')}</div>
+      </div>
+      <div class="grid2">
+        <label class="field"><span>${t('section')}</span><input type="text" name="section" maxlength="40" value="${esc(it.section || '')}" list="sections"></label>
+        <label class="field"><span>${t('dishCode')}</span><input type="text" name="code" maxlength="8" value="${esc(it.code || '')}"></label>
+      </div>`}
       <label class="field"><span>${t('description')}</span><input type="text" name="description" maxlength="150" value="${esc(it.description || '')}"></label>
       <div class="grid2">
         <button type="button" class="btn" data-close>${t('cancel')}</button>
@@ -213,6 +243,17 @@ export function openItemDialog({ item, mixedRice, onSave }) {
     </form>`, (dlg) => {
     const getPhoto = bindPhotoPicker(dlg, 'item-photo', it.photo, art('dish'));
     const form = $('#item-form', dlg);
+    // With sizes the single price box is hidden; each size has its own price.
+    const sizesBox = $('#sizes', dlg);
+    const syncSizes = () => $('#one-price', dlg).classList.toggle('hidden', !!sizesBox?.children.length);
+    $('#add-size', dlg)?.addEventListener('click', () => {
+      if (!sizesBox.children.length) sizesBox.insertAdjacentHTML('beforeend', sizeRow({ price: form.price.value }));
+      sizesBox.insertAdjacentHTML('beforeend', sizeRow());
+      syncSizes();
+    });
+    sizesBox?.addEventListener('click', (e) => {
+      if (e.target.closest('[data-size-del]')) { e.target.closest('.size-row').remove(); syncSizes(); }
+    });
     form.onsubmit = async (e) => {
       e.preventDefault();
       const f = new FormData(form);
@@ -222,11 +263,20 @@ export function openItemDialog({ item, mixedRice, onSave }) {
         description: f.get('description').trim(),
         photo: getPhoto(),
       };
+      const money = (v) => (v === '' || v == null ? null : Math.round(Number(v) * 100) / 100);
+      const sizes = [...dlg.querySelectorAll('.size-row')]
+        .map((r) => ({ label: $('[data-size-label]', r).value.trim(), price: money($('[data-size-price]', r).value) }))
+        .filter((s) => s.label && s.price != null);
+      if (sizes.length) {
+        Object.assign(data, { sizes, price: Math.min(...sizes.map((s) => s.price)), priceFrom: false });
+      } else {
+        Object.assign(data, { sizes: [], price: money(f.get('price')), priceFrom: !!f.get('priceFrom') });
+      }
       if (mixedRice) {
         data.kind = f.get('kind');
       } else {
-        data.price = Math.round(Number(f.get('price')) * 100) / 100;
         data.section = f.get('section').trim();
+        data.code = f.get('code').trim();
       }
       if (!item) data.available = true;
       const ok = await saving(form.querySelector('[type=submit]'), () => onSave(data));
@@ -241,8 +291,8 @@ export function itemCardHtml(it) {
     <div class="top">
       ${pic(it.photo || art('dish'))}
       <div style="flex:1;min-width:0">
-        <div style="font-weight:900;font-size:1.1rem;line-height:1.3">${esc(pick(it))} ${pickAlt(it) ? `<span class="muted" style="font-weight:500">${esc(pickAlt(it))}</span>` : ''}</div>
-        ${it.price != null && it.price !== '' ? `<div class="price">${fmtPrice(it.price)}</div>` : ''}
+        <div style="font-weight:900;font-size:1.1rem;line-height:1.3">${it.code ? `<span class="dish-code">${esc(it.code)}</span> ` : ''}${esc(pick(it))} ${pickAlt(it) ? `<span class="muted" style="font-weight:500">${esc(pickAlt(it))}</span>` : ''}</div>
+        ${it.sizes?.length ? sizesHtml(it) : priceText(it) ? `<div class="price">${esc(priceText(it))}</div>` : `<div class="small muted">${t('noPriceYet')}</div>`}
         ${it.kind ? `<div class="small muted">${t(`kind_${it.kind}`)}</div>` : ''}
       </div>
     </div>
