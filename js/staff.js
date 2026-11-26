@@ -163,7 +163,7 @@ async function renderImportMenu() {
             .then(() => { added++; btn.textContent = t('importProgress', { a: added, b: total }); })));
         }
         if (guide) {
-          await api.updateStore(s.id, { mixedRice: { note: s.mixedRice?.note || '', prices: m.prices } });
+          await api.updateStore(s.id, { mixedRice: { note: s.mixedRice?.note || m.note || '', prices: m.prices } });
         }
       }
       await api.updateCentre({ menuImportedAt: todayStr() });
