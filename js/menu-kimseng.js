@@ -1591,7 +1591,8 @@ export const KIM_SENG_MENU = {
       "price": 11.0
      }
     ],
-    "price": 10.0
+    "price": 10.0,
+    "was": "酸豆肉碎"
    },
    {
     "name": "Spicy Chicken Rice Noodle",
@@ -1607,7 +1608,8 @@ export const KIM_SENG_MENU = {
       "price": 11.0
      }
     ],
-    "price": 10.0
+    "price": 10.0,
+    "was": "辣子鸡面 / 辣子鸡"
    },
    {
     "name": "Minced Pork Dry Rice Noodle",
@@ -1639,7 +1641,8 @@ export const KIM_SENG_MENU = {
       "price": 12.0
      }
     ],
-    "price": 11.0
+    "price": 11.0,
+    "was": "老菜"
    },
    {
     "name": "Pork Ribs",
@@ -2540,3 +2543,6 @@ export const KIM_SENG_MENU = {
   "prices": []
  }
 };
+
+// Raised when the data is corrected after stalls already loaded it (`was` = old Chinese name).
+export const KIM_SENG_MENU_VERSION = 2;

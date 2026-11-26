@@ -125,13 +125,46 @@ function render(force = false) {
 // Hidden page, not linked from any menu: staff.html#/import-menu. Loads the
 // menu from the Kim Seng spreadsheet (js/menu-kimseng.js) into the database
 // once. Stalls that already have dishes are left alone, so it never doubles up.
+// When the data file is corrected later (KIM_SENG_MENU_VERSION), the same page
+// offers to update the loaded dishes to match.
 let importing = false;
+const MENU_FIELDS = ['name', 'nameZh', 'section', 'code', 'description', 'price', 'priceFrom', 'sizes'];
+const menuValues = (it) => ({
+  name: it.name || '', nameZh: it.nameZh || '', section: it.section || '', code: it.code || '', description: it.description || '',
+  price: it.price ?? null, priceFrom: !!it.priceFrom, sizes: it.sizes?.length ? it.sizes : [],
+});
+const menuDish = ({ was, ...it }, createdAt) => ({ ...it, available: true, photo: '', createdAt });
+
+// What differs between a stall's loaded dishes and the corrected data. Dishes
+// are matched by Chinese name (or their old name); photos, sold-out state and
+// dishes the owner added are kept.
+function menuChanges(m, items) {
+  const byZh = new Map(items.map((i) => [i.nameZh, i]));
+  const updates = [];
+  const adds = [];
+  let prev = Math.min(...items.map((i) => i.createdAt || 0)) - 1;
+  for (const it of m.items) {
+    const cur = byZh.get(it.nameZh) || (it.was && byZh.get(it.was));
+    if (!cur) { adds.push(menuDish(it, prev + 0.5)); prev += 0.5; continue; }
+    prev = cur.createdAt || prev;
+    const have = menuValues(cur);
+    const want = menuValues(it);
+    const patch = Object.fromEntries(MENU_FIELDS.filter((k) => JSON.stringify(have[k]) !== JSON.stringify(want[k])).map((k) => [k, want[k]]));
+    if (Object.keys(patch).length) updates.push({ id: cur.id, nameZh: it.nameZh, patch });
+  }
+  return { updates, adds };
+}
+
 async function renderImportMenu() {
   if (importing) return;
-  const { KIM_SENG_MENU } = await import('./menu-kimseng.js?v=3');
-  const counts = Object.fromEntries(await Promise.all(S.all.map(async (s) =>
-    [s.id, (await firstValue((cb) => api.watchItems(s.id, cb))).length])));
+  const { KIM_SENG_MENU, KIM_SENG_MENU_VERSION } = await import('./menu-kimseng.js?v=3');
+  const lists = Object.fromEntries(await Promise.all(S.all.map(async (s) =>
+    [s.id, await firstValue((cb) => api.watchItems(s.id, cb))])));
+  const counts = Object.fromEntries(Object.entries(lists).map(([id, l]) => [id, l.length]));
   if (route()[0] !== 'import-menu' || importing) return;
+  if (S.centre.menuImportedAt && (S.centre.menuVersion || 1) < KIM_SENG_MENU_VERSION) {
+    return renderMenuFixes(KIM_SENG_MENU, KIM_SENG_MENU_VERSION, lists);
+  }
   const plan = Object.entries(KIM_SENG_MENU).map(([n, m]) => {
     const s = S.all.find((x) => Number(x.number) === Number(n));
     const status = !s ? t('importNoStall', { n }) : counts[s.id] ? t('importHas', { n: counts[s.id] }) : t('importWill', { n: m.items.length });
@@ -159,15 +192,57 @@ async function renderImportMenu() {
       const base = Date.now();
       for (const { s, m, add, guide } of todo) {
         if (add) {
-          await Promise.all(m.items.map((it, i) => api.addItem(s.id, { ...it, available: true, photo: '', createdAt: base + i })
+          await Promise.all(m.items.map((it, i) => api.addItem(s.id, menuDish(it, base + i))
             .then(() => { added++; btn.textContent = t('importProgress', { a: added, b: total }); })));
         }
         if (guide) {
           await api.updateStore(s.id, { mixedRice: { note: s.mixedRice?.note || m.note || '', prices: m.prices } });
         }
       }
-      await api.updateCentre({ menuImportedAt: todayStr() });
+      await api.updateCentre({ menuImportedAt: todayStr(), menuVersion: KIM_SENG_MENU_VERSION });
     }, t('importSaved'));
+    importing = false;
+    if (ok) render(true);
+  });
+}
+
+function renderMenuFixes(menu, version, lists) {
+  const plan = Object.entries(menu).map(([n, m]) => {
+    const s = S.all.find((x) => Number(x.number) === Number(n));
+    if (!s) return { n, m, s, updates: [], adds: [], note: false };
+    const note = !!m.note && s.type === 'mixedRice' && !s.mixedRice?.note;
+    return { n, m, s, note, ...menuChanges(m, lists[s.id] || []) };
+  });
+  const total = plan.reduce((a, p) => a + p.updates.length + p.adds.length + (p.note ? 1 : 0), 0);
+  const names = (l) => l.map((x) => x.nameZh).join('、');
+  const body = shell('#/stalls', `
+    <div class="help">${t('fixHelp')}</div>
+    <div class="card stack">${plan.map((p) => `<div class="row" style="flex-wrap:nowrap;align-items:flex-start">
+      <span class="plate">${esc(p.n)}</span>
+      <div style="min-width:0"><b>${esc(p.s ? pick(p.s) : '—')}</b>
+        ${p.updates.length ? `<div class="small">${esc(t('fixUpdate', { n: p.updates.length }))}: ${esc(names(p.updates))}</div>` : ''}
+        ${p.adds.length ? `<div class="small">${esc(t('fixAdd', { n: p.adds.length }))}: ${esc(names(p.adds))}</div>` : ''}
+        ${p.note ? `<div class="small">${esc(t('fixNote'))}</div>` : ''}
+        ${!p.updates.length && !p.adds.length && !p.note ? `<div class="small muted">${esc(p.s ? t('fixNone') : t('importNoStall', { n: p.n }))}</div>` : ''}
+      </div></div>`).join('')}</div>
+    <button type="button" class="btn green big" id="do-fix">${total ? t('fixBtn', { n: total }) : t('fixMark')}</button>`,
+  t('fixTitle'));
+  $('#do-fix', body).addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    importing = true;
+    let n = 0;
+    const step = () => { n++; btn.textContent = t('importProgress', { a: n, b: total }); };
+    const ok = await saving(btn, async () => {
+      for (const p of plan) {
+        if (!p.s) continue;
+        await Promise.all([
+          ...p.updates.map((u) => api.updateItem(p.s.id, u.id, u.patch).then(step)),
+          ...p.adds.map((it) => api.addItem(p.s.id, it).then(step)),
+        ]);
+        if (p.note) await api.updateStore(p.s.id, { mixedRice: { ...p.s.mixedRice, note: p.m.note } }).then(step);
+      }
+      await api.updateCentre({ menuVersion: version });
+    }, t('fixSaved'));
     importing = false;
     if (ok) render(true);
   });
