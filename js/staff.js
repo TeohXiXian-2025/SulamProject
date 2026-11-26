@@ -128,10 +128,10 @@ function render(force = false) {
 // When the data file is corrected later (KIM_SENG_MENU_VERSION), the same page
 // offers to update the loaded dishes to match.
 let importing = false;
-const MENU_FIELDS = ['name', 'nameZh', 'section', 'code', 'description', 'price', 'priceFrom', 'sizes'];
+const MENU_FIELDS = ['name', 'nameZh', 'section', 'code', 'description', 'price', 'priceFrom', 'sizes', 'days'];
 const menuValues = (it) => ({
   name: it.name || '', nameZh: it.nameZh || '', section: it.section || '', code: it.code || '', description: it.description || '',
-  price: it.price ?? null, priceFrom: !!it.priceFrom, sizes: it.sizes?.length ? it.sizes : [],
+  price: it.price ?? null, priceFrom: !!it.priceFrom, sizes: it.sizes?.length ? it.sizes : [], days: it.days?.length ? it.days : [],
 });
 const menuDish = ({ was, ...it }, createdAt) => ({ ...it, available: true, photo: '', createdAt });
 
@@ -209,11 +209,14 @@ async function renderImportMenu() {
 function renderMenuFixes(menu, version, lists) {
   const plan = Object.entries(menu).map(([n, m]) => {
     const s = S.all.find((x) => Number(x.number) === Number(n));
-    if (!s) return { n, m, s, updates: [], adds: [], note: false };
+    if (!s) return { n, m, s, updates: [], adds: [], note: false, guide: false };
     const note = !!m.note && s.type === 'mixedRice' && !s.mixedRice?.note;
-    return { n, m, s, note, ...menuChanges(m, lists[s.id] || []) };
+    // The set prices on the board replace an older price guide.
+    const row = (r) => [r.label, r.labelZh || '', Number(r.price)];
+    const guide = !!m.prices?.length && JSON.stringify((s.mixedRice?.prices || []).map(row)) !== JSON.stringify(m.prices.map(row));
+    return { n, m, s, note, guide, ...menuChanges(m, lists[s.id] || []) };
   });
-  const total = plan.reduce((a, p) => a + p.updates.length + p.adds.length + (p.note ? 1 : 0), 0);
+  const total = plan.reduce((a, p) => a + p.updates.length + p.adds.length + (p.note ? 1 : 0) + (p.guide ? 1 : 0), 0);
   const names = (l) => l.map((x) => x.nameZh).join('、');
   const body = shell('#/stalls', `
     <div class="help">${t('fixHelp')}</div>
@@ -223,7 +226,8 @@ function renderMenuFixes(menu, version, lists) {
         ${p.updates.length ? `<div class="small">${esc(t('fixUpdate', { n: p.updates.length }))}: ${esc(names(p.updates))}</div>` : ''}
         ${p.adds.length ? `<div class="small">${esc(t('fixAdd', { n: p.adds.length }))}: ${esc(names(p.adds))}</div>` : ''}
         ${p.note ? `<div class="small">${esc(t('fixNote'))}</div>` : ''}
-        ${!p.updates.length && !p.adds.length && !p.note ? `<div class="small muted">${esc(p.s ? t('fixNone') : t('importNoStall', { n: p.n }))}</div>` : ''}
+        ${p.guide ? `<div class="small">${esc(t('fixGuide'))}: ${esc(p.m.prices.map((r) => `${r.labelZh} ${fmtPrice(r.price)}`).join('、'))}</div>` : ''}
+        ${!p.updates.length && !p.adds.length && !p.note && !p.guide ? `<div class="small muted">${esc(p.s ? t('fixNone') : t('importNoStall', { n: p.n }))}</div>` : ''}
       </div></div>`).join('')}</div>
     <button type="button" class="btn green big" id="do-fix">${total ? t('fixBtn', { n: total }) : t('fixMark')}</button>`,
   t('fixTitle'));
@@ -239,7 +243,13 @@ function renderMenuFixes(menu, version, lists) {
           ...p.updates.map((u) => api.updateItem(p.s.id, u.id, u.patch).then(step)),
           ...p.adds.map((it) => api.addItem(p.s.id, it).then(step)),
         ]);
-        if (p.note) await api.updateStore(p.s.id, { mixedRice: { ...p.s.mixedRice, note: p.m.note } }).then(step);
+        if (p.note || p.guide) {
+          await api.updateStore(p.s.id, { mixedRice: {
+            ...p.s.mixedRice, ...(p.note ? { note: p.m.note } : {}), ...(p.guide ? { prices: p.m.prices } : {}),
+          } });
+          if (p.note) step();
+          if (p.guide) step();
+        }
       }
       await api.updateCentre({ menuVersion: version });
     }, t('fixSaved'));
