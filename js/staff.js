@@ -116,9 +116,61 @@ function render(force = false) {
     if (page === 'qr') return renderQr();
     if (page === 'reviews') return renderAllReviews();
     if (page === 'admins') return renderAdmins();
+    if (page === 'import-menu') return renderImportMenu();
   }
   if (page === 'account') return renderAccount();
   return renderHome();
+}
+
+// Hidden page, not linked from any menu: staff.html#/import-menu. Loads the
+// menu from the Kim Seng spreadsheet (js/menu-kimseng.js) into the database
+// once. Stalls that already have dishes are left alone, so it never doubles up.
+let importing = false;
+async function renderImportMenu() {
+  if (importing) return;
+  const { KIM_SENG_MENU } = await import('./menu-kimseng.js?v=3');
+  const counts = Object.fromEntries(await Promise.all(S.all.map(async (s) =>
+    [s.id, (await firstValue((cb) => api.watchItems(s.id, cb))).length])));
+  if (route()[0] !== 'import-menu' || importing) return;
+  const plan = Object.entries(KIM_SENG_MENU).map(([n, m]) => {
+    const s = S.all.find((x) => Number(x.number) === Number(n));
+    const status = !s ? t('importNoStall', { n }) : counts[s.id] ? t('importHas', { n: counts[s.id] }) : t('importWill', { n: m.items.length });
+    // The mixed rice price guide is filled whenever it is still empty.
+    const guide = !!s && !!m.prices?.length && !s.mixedRice?.prices?.length;
+    return { n, m, s, add: !!s && !counts[s.id], guide, status: guide ? `${status} · ${t('importGuide')}` : status };
+  });
+  const todo = plan.filter((p) => p.add || p.guide);
+  const total = todo.reduce((a, p) => a + (p.add ? p.m.items.length : 0), 0);
+  const done = S.centre.menuImportedAt;
+  const body = shell('#/stalls', `
+    <div class="help">${t('importHelp')}</div>
+    ${done ? `<div class="notice">✓ ${t('importDone', { d: esc(done) })}</div>` : ''}
+    <div class="card stack">${plan.map((p) => `<div class="row" style="flex-wrap:nowrap">
+      <span class="plate">${esc(p.n)}</span>
+      <div style="min-width:0"><b>${esc(p.s ? pick(p.s) : '—')}</b>
+        <div class="small ${p.add ? '' : 'muted'}">${esc(p.status)}</div></div></div>`).join('')}</div>
+    ${!done && todo.length ? `<button type="button" class="btn green big" id="do-import">${total ? t('importBtn', { n: total }) : t('importGuideBtn')}</button>` : ''}`,
+  t('importTitle'));
+  $('#do-import', body)?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    importing = true;
+    let added = 0;
+    const ok = await saving(btn, async () => {
+      const base = Date.now();
+      for (const { s, m, add, guide } of todo) {
+        if (add) {
+          await Promise.all(m.items.map((it, i) => api.addItem(s.id, { ...it, available: true, photo: '', createdAt: base + i })
+            .then(() => { added++; btn.textContent = t('importProgress', { a: added, b: total }); })));
+        }
+        if (guide) {
+          await api.updateStore(s.id, { mixedRice: { note: s.mixedRice?.note || '', prices: m.prices } });
+        }
+      }
+      await api.updateCentre({ menuImportedAt: todayStr() });
+    }, t('importSaved'));
+    importing = false;
+    if (ok) render(true);
+  });
 }
 
 function staffNav() {

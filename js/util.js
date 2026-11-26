@@ -96,9 +96,16 @@ export function sortStores(list) {
   return [...list].sort((a, b) => (a.number ?? 999) - (b.number ?? 999));
 }
 
+// Dishes in the order they were added, grouped by section; sections appear in
+// the order their first dish was added (so an imported menu keeps its order).
 export function sortItems(list) {
-  return [...list].sort((a, b) =>
-    (a.section || '').localeCompare(b.section || '') || (a.createdAt || 0) - (b.createdAt || 0));
+  const first = new Map();
+  for (const it of list) {
+    const k = it.section || '';
+    first.set(k, Math.min(first.get(k) ?? Infinity, it.createdAt || 0));
+  }
+  return [...list].sort((a, b) => first.get(a.section || '') - first.get(b.section || '')
+    || (a.section || '').localeCompare(b.section || '') || (a.createdAt || 0) - (b.createdAt || 0));
 }
 
 // Stall categories (labels live in i18n.js). The colour is used for the

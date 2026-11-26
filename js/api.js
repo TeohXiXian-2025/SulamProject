@@ -158,7 +158,7 @@ async function firebaseApi(config) {
     watchItems: (storeId, cb) => F.onSnapshot(F.collection(db, 'stores', storeId, 'items'),
       (snap) => cb(sortItems(snap.docs.map((d) => ({ ...withId(d), createdAt: millis(d.data().createdAt) })))), onErr),
     // createdAt is a plain number so dishes keep the order they were added in.
-    addItem: (storeId, data) => F.addDoc(F.collection(db, 'stores', storeId, 'items'), clean({ ...data, createdAt: Date.now() })),
+    addItem: (storeId, data) => F.addDoc(F.collection(db, 'stores', storeId, 'items'), clean({ createdAt: Date.now(), ...data })),
     updateItem: (storeId, itemId, patch) => F.updateDoc(F.doc(db, 'stores', storeId, 'items', itemId), clean(patch)),
     deleteItem: (storeId, itemId) => F.deleteDoc(F.doc(db, 'stores', storeId, 'items', itemId)),
 

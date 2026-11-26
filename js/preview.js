@@ -4,10 +4,10 @@
 // Leave preview with ?preview=off (or the "Exit preview" link in the banner).
 import { DEFAULT_CENTRE, STARTER_STORES } from './seed.js?v=3';
 import { sortStores, sortItems, isOwnerOf, ownerFields } from './util.js?v=3';
-import { art } from './art.js?v=3';
+import { KIM_SENG_MENU } from './menu-kimseng.js?v=3';
 
 const FLAG = 'kimseng-preview';
-const KEY = 'kimseng-preview-data-v2';
+const KEY = 'kimseng-preview-data-v3';
 const USER_KEY = 'kimseng-preview-user';
 const MANAGER = 'manager@preview.test';
 // Stall 2 has two owners to show that a stall can have several logins.
@@ -30,61 +30,17 @@ const clean = (o) => JSON.parse(JSON.stringify(o ?? null));
 const lower = (s) => String(s || '').trim().toLowerCase();
 const newId = () => Math.random().toString(36).slice(2, 10);
 
-// Example dishes so every page has something to show. Prices are examples only.
-const m = (name, nameZh, price, pic, description, extra = {}) =>
-  ({ name, nameZh, price, photo: art(pic), description, available: true, section: '', ...extra });
-const SAMPLE = {
-  1: [
-    m('Kopi O', '咖啡乌', 1.8, 'kopiHot', 'Strong local black coffee with sugar.', { section: 'Hot', sectionZh: '热饮' }),
-    m('Teh Tarik', '拉茶', 2.2, 'tehHot', 'Pulled milk tea, smooth and frothy.', { section: 'Hot', sectionZh: '热饮' }),
-    m('Kopi Peng', '咖啡冰', 2.8, 'kopi', 'Iced coffee with condensed milk.', { section: 'Cold', sectionZh: '冷饮' }),
-    m('Barley', '薏米水', 2.0, 'barley', 'Homemade barley drink, lightly sweet.', { section: 'Cold', sectionZh: '冷饮', available: false }),
-  ],
-  2: [
-    m('Sweet & sour pork', '咕咾肉', null, 'sweetSour', '', { kind: 'meat' }),
-    m('Curry chicken', '咖喱鸡', null, 'curry', '', { kind: 'meat' }),
-    m('Fried fish', '炸鱼', null, 'fish', '', { kind: 'fish' }),
-    m('Stir-fried cabbage', '炒包菜', null, 'veg', '', { kind: 'veg' }),
-    m('Long beans', '炒长豆', null, 'beans', '', { kind: 'veg' }),
-    m('Steamed egg', '蒸蛋', null, 'egg', '', { kind: 'egg' }),
-  ],
-  3: [
-    m('Char siu pau', '叉烧包', 2.2, 'dish', 'Fluffy steamed bun filled with sweet barbecued pork.'),
-    m('Big pau', '大包', 3.5, 'dish', 'Large bun with minced pork, egg and mushroom.'),
-  ],
-  4: [
-    m('Kung pao chicken', '宫保鸡丁', 12, 'wok', 'Wok-fried chicken with dried chilli and cashew.'),
-    m('Egg fried rice', '蛋炒饭', 7.5, 'friedRice', 'Fragrant wok-fried rice with egg and spring onion.'),
-    m('Kangkung belacan', '马来风光', 8, 'kangkung', 'Water spinach fried with spicy shrimp paste.', { available: false }),
-  ],
-  5: [m('Mapo tofu', '麻婆豆腐', 10, 'mapoTofu', 'Soft tofu in spicy bean sauce.')],
-  6: [m('Pork noodle soup', '猪肉粉', 9, 'soup', 'Rice noodles in clear pork broth with minced pork and slices.')],
-  7: [
-    m('Roasted chicken rice', '烧鸡饭', 8, 'roastChicken', 'Crispy-skin roast chicken on rice cooked in chicken broth.'),
-    m('Char siu rice', '叉烧饭', 9, 'charSiu', 'Honey-glazed barbecued pork on fragrant rice.'),
-  ],
-  8: [m('Kolo mee', '干捞面', 8, 'wantanMee', 'Sarawak-style springy noodles tossed in shallot oil with char siu.')],
-  9: [
-    m('Chilli pan mee (dry)', '辣椒板面', 9, 'panMeeDry', 'Hand-made noodles with fried chilli, egg and anchovies.'),
-    m('Soup pan mee', '汤板面', 8, 'panMeeSoup', 'Torn noodles in anchovy soup with sweet potato leaves.'),
-  ],
-  10: [m('Fish porridge', '鱼片粥', 8, 'porridge', 'Smooth rice porridge with fresh fish slices and ginger.')],
-  11: [m('Bamboo noodles with wantan', '竹升面云吞', 9, 'wantanMee', 'Springy noodles pressed by hand with a bamboo pole.')],
-};
-
 function seed() {
   const data = { centre: clean(DEFAULT_CENTRE), admins: [MANAGER], stores: {}, items: {}, reviews: {}, accounts: {} };
   for (const s of STARTER_STORES) {
     const id = `s${s.number}`;
     data.stores[id] = clean(s);
     data.items[id] = {};
-    (SAMPLE[s.number] || []).forEach((it, i) => { data.items[id][`i${s.number}-${i}`] = { ...it, createdAt: i }; });
+    // The real Kim Seng menu, so preview looks like the live site after import.
+    (KIM_SENG_MENU[s.number]?.items || []).forEach((it, i) => { data.items[id][`i${s.number}-${i}`] = { ...it, available: true, createdAt: i }; });
     data.reviews[id] = {};
   }
-  data.stores.s2.mixedRice = { note: '', prices: [
-    { label: '1 meat + 2 veg', labelZh: '一肉两菜', price: 7 },
-    { label: '2 meat + 1 veg', labelZh: '两肉一菜', price: 9 },
-  ] };
+  data.stores.s2.mixedRice = { note: '', prices: KIM_SENG_MENU[2].prices };
   const owners = {};
   for (const [email, numbers] of Object.entries(OWNERS)) {
     const uid = `owner-${email.split('@')[0]}`;
@@ -216,7 +172,7 @@ export function previewApi() {
     watchItems: (storeId, cb) => watch(() => sortItems(Object.entries(db.items[storeId] || {}).map(([id, it]) => ({ id, ...it }))), cb),
     async addItem(storeId, data) {
       mustOwn(storeId);
-      (db.items[storeId] ??= {})[`i-${newId()}`] = { ...clean(data), createdAt: Date.now() };
+      (db.items[storeId] ??= {})[`i-${newId()}`] = { createdAt: Date.now(), ...clean(data) };
       persist();
     },
     async updateItem(storeId, itemId, patch) {
